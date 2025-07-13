@@ -1,0 +1,23 @@
+---
+import HelpLayout from "../../layouts/HelpLayout.astro";
+import { helpArticles } from "../../data/helpContent.js";
+
+export async function getStaticPaths() {
+  return Object.keys(helpArticles).map((slug) => ({
+    params: { slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const article = helpArticles[slug];
+
+if (!article) {
+  throw new Error(`Not found: ${slug}`);
+}
+
+const { title, content } = article;
+---
+
+<HelpLayout title={title}>
+  <article class="markdown-content" set:html={content} />
+</HelpLayout>

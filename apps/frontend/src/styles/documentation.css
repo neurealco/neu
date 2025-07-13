@@ -1,0 +1,122 @@
+.doc-intro h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.doc-intro p {
+  font-size: 1.1rem;
+  color: #cccccc;
+}
+
+.doc-section {
+  margin-top: 3rem;
+}
+
+.doc-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  border-bottom: 2px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+ol {
+  padding-left: 1.5rem;
+}
+
+code {
+  background: #1e1e1e;
+  color: #c4f4ff;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+th,
+td {
+  border: 1px solid #333;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+th {
+  background-color: #111;
+  color: #eeeeee;
+}
+
+td {
+  background-color: #181818;
+}
+
+.documentation-container {
+  background-color: #0a0a0a;
+  color: #f1f1f1;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.documentation-container .doc-intro h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.documentation-container .doc-intro p {
+  font-size: 1.1rem;
+  color: #cccccc;
+}
+
+.documentation-container .doc-section {
+  margin-top: 3rem;
+}
+
+.documentation-container .doc-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  border-bottom: 2px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+.documentation-container ol {
+  padding-left: 1.5rem;
+}
+
+.documentation-container code {
+  background: #1e1e1e;
+  color: #c4f4ff;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.documentation-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.documentation-container th,
+.documentation-container td {
+  border: 1px solid #333;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.documentation-container th {
+  background-color: #111;
+  color: #eeeeee;
+}
+
+.documentation-container td {
+  background-color: #181818;
+}
