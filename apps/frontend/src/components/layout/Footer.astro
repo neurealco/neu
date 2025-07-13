@@ -1,0 +1,153 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <a href="/">
+          <img
+            src="/assets/images/logo.png"
+            alt="NeuReal"
+            width="40"
+            height="40"
+          />
+          <span>NeuReal</span>
+        </a>
+        <p>Advanced YouTube Analytics & Optimization</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="link-group">
+          <h4>Product</h4>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/pricing">Pricing</a>
+          <a href="/features">Features</a>
+        </div>
+
+        <div class="link-group">
+          <h4>Resources</h4>
+          <a href="/blog">Blog</a>
+          <a href="/docs">Documentation</a>
+          <a href="/support">Support</a>
+        </div>
+
+        <div class="link-group">
+          <h4>Company</h4>
+          <a href="/about">About Us</a>
+          <a href="/careers">Careers</a>
+          <a href="/contact">Contact</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; {currentYear} NeuReal. All rights reserved.</p>
+      <div class="legal-links">
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="/cookies">Cookie Policy</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--darker);
+    border-top: 1px solid var(--card-border);
+    padding: 60px 0 30px;
+  }
+
+  .footer-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 50px;
+    margin-bottom: 50px;
+  }
+
+  .footer-logo {
+    max-width: 300px;
+  }
+
+  .footer-logo a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+  }
+
+  .footer-logo p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .footer-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+
+  .link-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .link-group h4 {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .link-group a {
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    transition: color 0.3s;
+  }
+
+  .link-group a:hover {
+    color: var(--primary);
+  }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 30px;
+    border-top: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .legal-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .legal-links a {
+    color: var(--text-secondary);
+    transition: color 0.3s;
+  }
+
+  .legal-links a:hover {
+    color: var(--primary);
+  }
+
+  @media (max-width: 768px) {
+    .footer-content {
+      grid-template-columns: 1fr;
+    }
+
+    .footer-links {
+      grid-template-columns: 1fr;
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      gap: 15px;
+    }
+  }
+</style>

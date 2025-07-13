@@ -1,0 +1,109 @@
+---
+import Layout from "../components/layout/Layout.astro";
+---
+
+<Layout title="YouTube Analytics & SEO Optimization">
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>Optimize Your YouTube Channel with AI</h1>
+        <p>
+          Get advanced analytics, SEO suggestions and grow your audience with
+          Neureal
+        </p>
+        <div class="hero-cta">
+          <a href="/login" class="btn">Get Started</a>
+          <a href="/dashboard" class="btn btn-outline">View Demo</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features section">
+    <div class="container">
+      <h2 class="section-title">Power Your Content</h2>
+      <div class="grid grid-cols-3">
+        <div class="card">
+          <h3>Performance Analytics</h3>
+          <p>Detailed metrics of your videos to understand what works best</p>
+        </div>
+        <div class="card">
+          <h3>AI Assistant</h3>
+          <p>Title, description and tag suggestions optimized for SEO</p>
+        </div>
+        <div class="card">
+          <h3>Credits System</h3>
+          <p>Earn credits completing surveys and access premium tools</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(
+      135deg,
+      var(--darker) 0%,
+      rgba(15, 23, 42, 0.8) 100%
+    );
+    padding: 100px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url("/assets/images/hero-pattern.png") center/cover no-repeat;
+    opacity: 0.05;
+    z-index: -1;
+  }
+
+  .hero-content {
+    max-width: 800px;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .hero h1 {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    line-height: 1.2;
+  }
+
+  .hero p {
+    font-size: 1.3rem;
+    margin-bottom: 40px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-cta {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .features .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .features .card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: var(--primary);
+  }
+</style>

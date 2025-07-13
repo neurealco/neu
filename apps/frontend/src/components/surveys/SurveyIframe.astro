@@ -1,0 +1,14 @@
+---
+const { url } = Astro.props;
+---
+
+<iframe src={url} class="survey-iframe" title="Surveys"></iframe>
+
+<style>
+  .survey-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 16px;
+  }
+</style>
