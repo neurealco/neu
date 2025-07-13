@@ -1,0 +1,102 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import SurveyIframe from "../../components/surveys/SurveyIframe.astro";
+import { getSurveyUrl } from "../../lib/api";
+
+const session = await getSession(Astro.request);
+if (!session) {
+  return Astro.redirect("/login");
+}
+
+const surveyUrl = await getSurveyUrl(session.user.id);
+---
+
+<DashboardLayout title="Earn Credits">
+  <div class="surveys-container">
+    <div class="surveys-header">
+      <h1>Earn Credits</h1>
+      <p>Complete surveys to earn credits for premium features</p>
+    </div>
+
+    <div class="survey-frame">
+      <SurveyIframe url={surveyUrl} />
+    </div>
+
+    <div class="credits-info">
+      <h2>How it works</h2>
+      <ul>
+        <li>Complete surveys to earn credits</li>
+        <li>1000 Theorem Reach points = 1000 NeuReal credits</li>
+        <li>Credits are added instantly after survey completion</li>
+        <li>Use credits to unlock premium features</li>
+      </ul>
+    </div>
+  </div>
+</DashboardLayout>
+
+<style>
+  .surveys-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .surveys-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .surveys-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .surveys-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .survey-frame {
+    height: 70vh;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .credits-info {
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 16px;
+    padding: 30px;
+  }
+
+  .credits-info h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--primary);
+  }
+
+  .credits-info ul {
+    list-style: none;
+  }
+
+  .credits-info li {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+  }
+
+  .credits-info li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--success);
+    font-weight: bold;
+  }
+</style>

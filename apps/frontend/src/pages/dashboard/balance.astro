@@ -1,0 +1,146 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { getUserCredits } from "../../lib/api";
+
+const session = await getSession(Astro.request);
+if (!session) {
+  return Astro.redirect("/login");
+}
+
+const credits = await getUserCredits(session.user.id);
+---
+
+<DashboardLayout title="Credits Balance">
+  <div class="balance-container">
+    <div class="balance-card">
+      <h1>Your Credits Balance</h1>
+      <div class="balance-amount">{credits.toLocaleString()}</div>
+      <p class="balance-info">
+        Use credits to access premium features and insights
+      </p>
+
+      <div class="balance-actions">
+        <a href="/dashboard/surveys" class="btn">Earn More Credits</a>
+        <a href="/pricing" class="btn btn-outline">Upgrade Plan</a>
+      </div>
+    </div>
+
+    <div class="transactions">
+      <h2>Recent Transactions</h2>
+      <div class="transaction-list">
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-title">Survey Completion</div>
+            <div class="transaction-date">Today, 14:32</div>
+          </div>
+          <div class="transaction-amount positive">+1000</div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-title">Stats Refresh</div>
+            <div class="transaction-date">Yesterday, 09:15</div>
+          </div>
+          <div class="transaction-amount negative">-50</div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-title">YouTube Analysis</div>
+            <div class="transaction-date">Jan 12, 2023</div>
+          </div>
+          <div class="transaction-amount negative">-100</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</DashboardLayout>
+
+<style>
+  .balance-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .balance-card {
+    background: linear-gradient(135deg, var(--darker), rgba(30, 41, 59, 0.8));
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .balance-card h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+
+  .balance-amount {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--success);
+  }
+
+  .balance-info {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+  }
+
+  .balance-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .transactions h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .transaction-list {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .transaction-item:last-child {
+    border-bottom: none;
+  }
+
+  .transaction-info {
+    flex-grow: 1;
+  }
+
+  .transaction-title {
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  .transaction-date {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .transaction-amount {
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+
+  .positive {
+    color: var(--success);
+  }
+
+  .negative {
+    color: var(--danger);
+  }
+</style>

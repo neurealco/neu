@@ -1,0 +1,212 @@
+---
+import Layout from '../components/layout/Layout.astro';
+---
+
+<Layout title="Pricing Plans">
+  <section class="pricing-section">
+    <div class="container">
+      <div class="pricing-header">
+        <h1>Choose Your Plan</h1>
+        <p>Simple, transparent pricing that scales with your channel</p>
+      </div>
+      
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>Free</h3>
+            <div class="price">$0<span>/month</span></div>
+          </div>
+          
+          <ul class="features">
+            <li>Basic analytics dashboard</li>
+            <li>1 AI suggestion per day</li>
+            <li>Limited historical data (7 days)</li>
+            <li>Email support</li>
+          </ul>
+          
+          <a href="/signup" class="btn btn-outline">Get Started</a>
+        </div>
+        
+        <div class="pricing-card featured">
+          <div class="pricing-header">
+            <h3>Pro</h3>
+            <div class="price">$19<span>/month</span></div>
+          </div>
+          
+          <ul class="features">
+            <li>Advanced analytics dashboard</li>
+            <li>Unlimited AI suggestions</li>
+            <li>1 year historical data</li>
+            <li>Priority email support</li>
+            <li>Competitor analysis</li>
+          </ul>
+          
+          <a href="/signup" class="btn">Get Started</a>
+        </div>
+        
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>Enterprise</h3>
+            <div class="price">Custom</div>
+          </div>
+          
+          <ul class="features">
+            <li>Custom analytics dashboard</li>
+            <li>Unlimited AI suggestions</li>
+            <li>Unlimited historical data</li>
+            <li>24/7 dedicated support</li>
+            <li>Custom integrations</li>
+            <li>Team collaboration</li>
+          </ul>
+          
+          <a href="/contact" class="btn btn-outline">Contact Sales</a>
+        </div>
+      </div>
+      
+      <div class="credits-info">
+        <h2>Credits System</h2>
+        <p>
+          All plans include our credits system. Earn credits by completing surveys and use them to:
+        </p>
+        <ul>
+          <li>Refresh your analytics data</li>
+          <li>Get additional AI suggestions</li>
+          <li>Access premium features</li>
+          <li>Download detailed reports</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .pricing-section {
+    padding: 100px 0;
+  }
+  
+  .pricing-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 60px;
+  }
+  
+  .pricing-header h1 {
+    font-size: 3rem;
+    margin-bottom: 15px;
+  }
+  
+  .pricing-header p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+  }
+  
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-bottom: 60px;
+  }
+  
+  .pricing-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .pricing-card.featured {
+    border: 2px solid var(--primary);
+    transform: scale(1.05);
+    position: relative;
+  }
+  
+  .pricing-card.featured::before {
+    content: 'Most Popular';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .pricing-card .pricing-header {
+    text-align: left;
+    margin-bottom: 30px;
+  }
+  
+  .pricing-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+  
+  .pricing-card .price {
+    font-size: 3rem;
+    font-weight: 700;
+  }
+  
+  .pricing-card .price span {
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+  
+  .features {
+    flex-grow: 1;
+    margin-bottom: 30px;
+  }
+  
+  .features li {
+    margin-bottom: 15px;
+    padding-left: 25px;
+    position: relative;
+  }
+  
+  .features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--success);
+  }
+  
+  .credits-info {
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 16px;
+    padding: 30px;
+  }
+  
+  .credits-info h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: var(--primary);
+  }
+  
+  .credits-info ul {
+    margin-top: 15px;
+    margin-left: 20px;
+  }
+  
+  .credits-info li {
+    margin-bottom: 10px;
+  }
+  
+  @media (max-width: 1024px) {
+    .pricing-grid {
+      grid-template-columns: 1fr;
+      max-width: 500px;
+      margin: 0 auto 60px;
+    }
+    
+    .pricing-card.featured {
+      transform: scale(1);
+    }
+  }
+</style>
