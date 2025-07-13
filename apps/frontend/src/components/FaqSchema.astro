@@ -1,0 +1,33 @@
+---
+const { questions, article } = Astro.props;
+---
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {questions.map(q => ({
+      "@type": "Question",
+      "name": q.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": q.answer
+      }
+    }))}
+  ],
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Ayuda",
+      "item": "https://neureal.com/help"
+    },{
+      "@type": "ListItem",
+      "position": 2,
+      "name": article.category,
+      "item": `https://neureal.com/help/${article.category}`
+    }]
+  }
+}
+</script>

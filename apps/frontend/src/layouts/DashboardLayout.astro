@@ -1,7 +1,7 @@
 ---
-import { getSession } from "../../lib/auth";
-import Sidebar from "../../components/dashboard/Sidebar.astro";
-import Header from "../../components/layout/Header.astro";
+import { getSession } from "../lib/auth";
+import Sidebar from "../components/dashboard/Sidebar.astro";
+import Header from "../components/layout/Header.astro";
 
 const session = await getSession(Astro.request);
 if (!session) {

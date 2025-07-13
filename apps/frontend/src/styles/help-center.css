@@ -1,0 +1,342 @@
+/* help-center.css - Versión actualizada */
+/* ============ Variables Globales ============ */
+:root {
+  --color-base: #0a0a0a;
+  --accent-blue: #0046d1;
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ============ Estructura Principal ============ */
+.help-center-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+/* ============ Cabecera con Buscador ============ */
+.help-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-top: 2rem;
+}
+
+.help-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.search-container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#helpSearch {
+  width: 100%;
+  padding: 1rem 2.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+#helpSearch:focus {
+  border-color: var(--accent-blue);
+  background: rgba(0, 70, 209, 0.15);
+  box-shadow: 0 0 15px rgba(0, 70, 209, 0.2);
+}
+
+.search-icon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ============ Tarjetas de Temas ============ */
+.help-topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.topic-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.topic-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.topic-icon {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--accent-blue);
+}
+
+.topic-card h3 {
+  color: var(--text-primary);
+}
+
+.topic-card p {
+  color: var(--text-secondary);
+}
+
+/* ============ FAQs ============ */
+.knowledge-base {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+}
+
+.faq-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+}
+
+.faq-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ============ Responsive Design ============ */
+@media (max-width: 768px) {
+  .help-center-container {
+    padding: 0 1rem;
+  }
+
+  .help-header h1 {
+    font-size: 2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .topic-card {
+    padding: 1.5rem;
+    min-height: auto;
+  }
+
+  .help-topics-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  #helpSearch {
+    padding: 0.8rem 1.5rem;
+  }
+
+  .faq-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.2rem;
+  }
+
+  .faq-icon {
+    font-size: 1.2rem;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .help-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .topic-card {
+    padding: 1.2rem;
+  }
+
+  .topic-icon {
+    font-size: 2rem;
+    margin-bottom: 0.8rem;
+  }
+
+  #helpSearch {
+    font-size: 0.9rem;
+    padding: 0.7rem 1.2rem;
+  }
+
+  .search-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ============ Ajustes de Color ============ */
+.empty-state {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.topic-card h3::after,
+.knowledge-base h2::after {
+  background: var(--accent-blue);
+}
+
+#helpSearch::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* help-center.css - Versión Mejorada */
+/* ============ Ajustes Específicos para FAQ ============ */
+.knowledge-base {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 3rem 0;
+}
+
+.faq-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.faq-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  padding: 1.5rem !important;
+  display: flex !important;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-card:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.faq-icon {
+  font-size: 1.8rem;
+  min-width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(0, 70, 209, 0.2);
+  padding: 12px;
+}
+
+.faq-content h3 {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.faq-content p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ============ Corrección de la Búsqueda ============ */
+.search-container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+#helpSearch {
+  padding-left: 3.5rem !important;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+#helpSearch:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(0, 70, 209, 0.2);
+}
+
+/* ============ Responsive Design Mejorado ============ */
+@media (max-width: 768px) {
+  .faq-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.2rem !important;
+  }
+
+  .faq-icon {
+    font-size: 1.5rem;
+    min-width: 40px;
+    height: 40px;
+    padding: 10px;
+  }
+
+  .faq-content h3 {
+    font-size: 1.1rem;
+  }
+
+  .faq-content p {
+    font-size: 0.9rem;
+  }
+
+  .search-icon {
+    left: 15px;
+    width: 20px;
+    height: 20px;
+  }
+
+  #helpSearch {
+    padding-left: 2.8rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .knowledge-base {
+    padding: 1.5rem;
+  }
+
+  .faq-card {
+    padding: 1rem !important;
+  }
+}
+
+/* ============ Efectos de Transición ============ */
+.faq-card,
+.topic-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+/* ============ Ajuste de Colores ============ */
+.empty-state {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  text-align: center;
+}
+
+.empty-state h3 {
+  color: var(--text-primary);
+  margin: 1rem 0;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+}

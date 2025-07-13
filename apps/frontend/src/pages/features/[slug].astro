@@ -1,0 +1,26 @@
+---
+import FeaturesLayout from "../../layouts/FeaturesLayout.astro";
+import { featureArticles } from "../../data/featuresContent.js";
+
+export async function getStaticPaths() {
+  return Object.keys(featureArticles).map((slug) => ({
+    params: { slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const feature = featureArticles[slug];
+
+if (!feature) {
+  return new Response(null, {
+    status: 404,
+    statusText: "Feature not found",
+  });
+}
+
+const { title, content } = feature;
+---
+
+<FeaturesLayout title={title}>
+  <article set:html={content} />
+</FeaturesLayout>

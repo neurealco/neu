@@ -1,0 +1,207 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import FaqSchema from "../../components/FaqSchema.astro";
+---
+
+<MainLayout title="Help - Neureal">
+  <Header />
+
+  <main class="help-center-container">
+    <div class="help-header">
+      <h1 class="gradient-title">Neureal Help Center</h1>
+      <div class="search-wrapper">
+        <div class="search-container">
+          <input
+            type="text"
+            id="helpSearch"
+            placeholder="Search knowledge base..."
+            class="search-input"
+          />
+          <svg class="search-icon" viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            ></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <section class="main-topics">
+      <div class="help-topics-grid">
+        <a href="/help/pricing" class="topic-card">
+          <div class="card-content">
+            <div class="topic-icon">📄</div>
+            <h3>Pricing</h3>
+            <p>Check the prices and plans of Neureal</p>
+          </div>
+          <div class="hover-effect"></div>
+        </a>
+
+        <a href="/security" class="topic-card">
+          <div class="card-content">
+            <div class="topic-icon">🔒</div>
+            <h3>Security & Privacy</h3>
+            <p>Information about the security</p>
+          </div>
+          <div class="hover-effect"></div>
+        </a>
+
+        <a href="/features/dashboard" class="topic-card">
+          <div class="card-content">
+            <div class="topic-icon">⚙️</div>
+            <h3>Dashboard functions</h3>
+            <p>Check what the dashboard does</p>
+          </div>
+          <div class="hover-effect"></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="knowledge-base">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div class="faq-grid" id="faqResults">
+        <!-- FAQs Visibles -->
+        <article class="faq-card default-faq">
+          <div class="faq-icon">🔑</div>
+          <div class="faq-content">
+            <h3>Password Recovery</h3>
+            <p>Step-by-step guide to reset your password</p>
+          </div>
+        </article>
+        <a href="/payment-methods" class="none">
+          <article class="faq-card default-faq">
+            <div class="faq-icon">💳</div>
+            <div class="faq-content">
+              <h3>Payment Methods</h3>
+              <p>Supported payment options and currencies</p>
+            </div>
+          </article>
+        </a>
+        <!-- FAQs Ocultas -->
+        <article class="faq-card">
+          <div class="faq-icon">📱</div>
+          <div class="faq-content">
+            <h3>Mobile App Issues</h3>
+            <p>Fix common problems with our mobile application</p>
+          </div>
+        </article>
+
+        <!-- Más FAQs... -->
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+
+  <FaqSchema
+    questions={[
+      {
+        question: "Password Recovery",
+        answer: "Complete guide to securely reset your account password",
+      },
+      // Más preguntas...
+    ]}
+  />
+
+  <!-- Script de Búsqueda Mejorado -->
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      const search = {
+        input: document.getElementById("helpSearch"),
+        container: document.querySelector(".knowledge-base"),
+        allItems: document.querySelectorAll(".faq-card, .topic-card"),
+        timeout: null,
+      };
+
+      const debounceSearch = (callback, delay = 300) => {
+        clearTimeout(search.timeout);
+        search.timeout = setTimeout(callback, delay);
+      };
+
+      const handleSearch = () => {
+        const term = search.input.value.trim().toLowerCase();
+        const hasSearch = term.length > 0;
+        let matches = 0;
+
+        search.allItems.forEach((item) => {
+          const content = item.textContent.toLowerCase();
+          const isMatch = content.includes(term);
+
+          item.classList.toggle("matched", isMatch);
+          item.style.display = isMatch ? "flex" : "none";
+
+          if (isMatch) matches++;
+        });
+
+        search.container.classList.toggle("search-active", hasSearch);
+        toggleEmptyState(hasSearch && matches === 0);
+      };
+
+      const toggleEmptyState = (show) => {
+        let emptyState = document.getElementById("noResults");
+
+        if (show && !emptyState) {
+          emptyState = document.createElement("div");
+          emptyState.id = "noResults";
+          emptyState.className = "empty-state";
+          emptyState.innerHTML = `
+            <div class="empty-icon">😕</div>
+            <h3>No results found</h3>
+            <p>Try different keywords or check our documentation</p>
+          `;
+          search.container.appendChild(emptyState);
+        } else if (!show && emptyState) {
+          emptyState.remove();
+        }
+      };
+
+      search.input.addEventListener("input", () =>
+        debounceSearch(handleSearch)
+      );
+    });
+  </script>
+</MainLayout>
+
+<style>
+  /* Estilos mínimos para el componente */
+  .gradient-title {
+    background: linear-gradient(45deg, #fff, #a0aec0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .search-wrapper {
+    max-width: 680px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .hover-effect {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at var(--x) var(--y),
+      rgba(71, 71, 71, 0.1) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .topic-card:hover .hover-effect {
+    opacity: 1;
+  }
+
+  .none,
+  none a {
+    color: none !important;
+    text-decoration: none !important;
+  }
+</style>
