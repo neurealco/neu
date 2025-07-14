@@ -1,0 +1,365 @@
+---
+// apps/frontend/src/pages/dashboard/ai-assistant.astro
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { getUserCredits } from '../../lib/api';
+import { getSession } from '../../lib/auth';
+
+const session = await getSession(Astro.request);
+if (!session) {
+  return Astro.redirect('/login');
+}
+
+const credits = await getUserCredits(session.user.id);
+---
+
+<DashboardLayout title="AI Assistant">
+  <div class="ai-assistant">
+    <div class="chat-header">
+      <h1>Asistente de IA</h1>
+      <p>Consulta estrategias para mejorar tu canal de YouTube</p>
+      <div class="credits-display">
+        <span class="credits-label">Créditos disponibles:</span>
+        <span class="credits-value">{credits.toLocaleString()}</span>
+      </div>
+    </div>
+
+    <div id="chat-container" class="chat-container">
+      <div class="message ai">
+        <div class="avatar">🤖</div>
+        <div class="bubble">
+          ¡Hola! Soy tu asistente especializado en YouTube. Puedo ayudarte con:
+          <ul>
+            <li>Estrategias para aumentar suscriptores</li>
+            <li>Optimización de títulos y descripciones</li>
+            <li>Análisis de tendencias de contenido</li>
+            <li>Ideas para mejorar el engagement</li>
+          </ul>
+          Cada consulta cuesta 100 créditos. ¿En qué puedo ayudarte hoy?
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input 
+        type="text" 
+        id="message-input" 
+        placeholder="Escribe tu mensaje..." 
+        disabled={credits < 100}
+      />
+      <button id="send-button" class="btn" disabled={credits < 100}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Elementos del DOM
+    const chatContainer = document.getElementById('chat-container');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const creditsValue = document.querySelector('.credits-value');
+    let currentCredits = <%= credits %>;
+    
+    // Función para añadir mensaje al chat
+    function addMessage(sender, text) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', sender);
+      
+      const avatar = document.createElement('div');
+      avatar.classList.add('avatar');
+      avatar.textContent = sender === 'user' ? '👤' : '🤖';
+      
+      const bubble = document.createElement('div');
+      bubble.classList.add('bubble');
+      bubble.innerHTML = text;
+      
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(bubble);
+      chatContainer.appendChild(messageDiv);
+      
+      // Scroll al último mensaje
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Función para enviar mensaje
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message || currentCredits < 100) return;
+      
+      // Añadir mensaje del usuario
+      addMessage('user', message);
+      messageInput.value = '';
+      messageInput.disabled = true;
+      sendButton.disabled = true;
+      
+      try {
+        // Enviar mensaje al backend
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ message })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Error en la respuesta del servidor');
+        }
+        
+        const data = await response.json();
+        
+        // Añadir respuesta de la IA
+        addMessage('ai', data.response);
+        
+        // Actualizar créditos
+        currentCredits -= 100;
+        creditsValue.textContent = currentCredits.toLocaleString();
+        
+      } catch (error) {
+        addMessage('ai', `⚠️ Error: ${error.message}. Por favor intenta nuevamente.`);
+      } finally {
+        messageInput.disabled = currentCredits < 100;
+        sendButton.disabled = currentCredits < 100;
+        messageInput.focus();
+      }
+    }
+    
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</DashboardLayout>
+
+<style>
+  :root {
+    --ai-primary: #6366f1;
+    --ai-primary-dark: #4f46e5;
+    --ai-bg: #0f172a;
+    --ai-card-bg: rgba(15, 23, 42, 0.8);
+    --ai-card-border: rgba(255, 255, 255, 0.1);
+    --ai-text: #e2e8f0;
+    --ai-text-secondary: #94a3b8;
+    --ai-success: #10b981;
+    --ai-bubble-user: #4338ca;
+    --ai-bubble-ai: #1e293b;
+  }
+
+  .ai-assistant {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--ai-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .chat-header {
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.8);
+    border-bottom: 1px solid var(--ai-card-border);
+  }
+
+  .chat-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--ai-primary), var(--ai-success));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .chat-header p {
+    color: var(--ai-text-secondary);
+    margin-bottom: 15px;
+  }
+
+  .credits-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+  }
+
+  .credits-label {
+    color: var(--ai-text-secondary);
+  }
+
+  .credits-value {
+    font-weight: 700;
+    color: var(--ai-success);
+  }
+
+  .chat-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    background: radial-gradient(
+      circle at center,
+      rgba(30, 41, 59, 0.5) 0%,
+      rgba(15, 23, 42, 0.8) 100%
+    );
+  }
+
+  .message {
+    display: flex;
+    gap: 15px;
+    max-width: 85%;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .message.ai {
+    align-self: flex-start;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ai-card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    border: 1px solid var(--ai-card-border);
+  }
+
+  .bubble {
+    padding: 15px 20px;
+    border-radius: 18px;
+    line-height: 1.5;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .message.user .bubble {
+    background: var(--ai-bubble-user);
+    color: white;
+    border-bottom-right-radius: 5px;
+  }
+
+  .message.ai .bubble {
+    background: var(--ai-bubble-ai);
+    color: var(--ai-text);
+    border-bottom-left-radius: 5px;
+  }
+
+  .bubble::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.01) 100%
+    );
+    pointer-events: none;
+  }
+
+  .input-area {
+    display: flex;
+    padding: 15px;
+    background: rgba(30, 41, 59, 0.8);
+    border-top: 1px solid var(--ai-card-border);
+  }
+
+  .input-area input {
+    flex-grow: 1;
+    padding: 14px 18px;
+    border: none;
+    border-radius: 12px;
+    background: var(--ai-card-bg);
+    color: var(--ai-text);
+    font-size: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s;
+  }
+
+  .input-area input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--ai-primary);
+  }
+
+  .input-area button {
+    margin-left: 12px;
+    padding: 0 20px;
+    border-radius: 12px;
+    background: var(--ai-primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+  }
+
+  .input-area button:hover {
+    background: var(--ai-primary-dark);
+    transform: translateY(-2px);
+  }
+
+  .input-area button:disabled {
+    background: #4b5563;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .input-area button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .ai-assistant {
+      height: calc(100vh - 100px);
+      border-radius: 0;
+    }
+    
+    .message {
+      max-width: 90%;
+    }
+    
+    .input-area {
+      padding: 12px;
+    }
+    
+    .input-area input {
+      padding: 12px 15px;
+    }
+  }
+</style>
