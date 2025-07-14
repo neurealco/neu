@@ -3,6 +3,7 @@ export default {
     SUPABASE_SECRET: process.env.SUPABASE_SECRET || '',
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+      HUGGINGFACE_API_KEY: process.env.HUGGINGFACE_API_KEY || '',
     THEOREM_API_KEY: process.env.THEOREM_API_KEY || '',
     THEOREM_SECRET: process.env.THEOREM_SECRET || '',
     JWT_SECRET: process.env.JWT_SECRET || 'neureal_secret_2023',
