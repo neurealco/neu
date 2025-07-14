@@ -1,4 +1,4 @@
-import { User } from '@supabase/supabase-js';
+import { User } from "@supabase/supabase-js";
 
 declare global {
   namespace Express {
@@ -20,6 +20,6 @@ declare global {
     user_id: string;
     amount: number;
     survey_id: string;
-    status: 'completed' | 'terminated';
+    status: "completed" | "terminated";
   }
 }
