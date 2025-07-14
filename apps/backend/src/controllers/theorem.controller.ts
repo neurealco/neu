@@ -1,14 +1,19 @@
+// apps/backend/src/controllers/theorem.controller.ts
 import { Request, Response } from 'express';
-import { handleSurveyComplete } from '../services/theorem.service';
+import { addCredits } from '../services/credits.service';
 import logger from '../utils/logger.util';
 
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
     const payload = req.body as TheoremReachWebhook;
     
-    // Solo procesar encuestas completadas
     if (payload.status === 'completed') {
-      await handleSurveyComplete(payload.user_id, payload.amount);
+      await addCredits(
+        payload.user_id, 
+        payload.amount,
+        `Survey completed: ${payload.survey_id}`
+      );
+      
       logger.info(`Credits added to user: ${payload.user_id}, amount: ${payload.amount}`);
     }
     
