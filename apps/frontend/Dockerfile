@@ -3,21 +3,21 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# 1. Copiar archivos esenciales de la raíz del proyecto
+# 1. Copiar archivos esenciales de la raíz
 COPY package.json pnpm-lock.yaml ./
 COPY apps/frontend/package.json ./apps/frontend/package.json
 
 # 2. Instalar pnpm globalmente
 RUN npm install -g pnpm
 
-# 3. Instalar dependencias usando el lockfile raíz
+# 3. Instalar dependencias globales
 RUN pnpm install --frozen-lockfile
 
 # 4. Copiar todo el código del frontend
 COPY apps/frontend ./apps/frontend
 
-# 5. Construir el frontend usando la ruta local
-RUN cd apps/frontend && ../node_modules/.bin/astro build
+# 5. Construir usando el ejecutable de Astro directamente
+RUN cd apps/frontend && node ../node_modules/astro/astro.js build
 
 # Etapa de producción
 FROM node:18-alpine
