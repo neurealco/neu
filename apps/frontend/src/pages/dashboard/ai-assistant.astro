@@ -1,139 +1,19 @@
 ---
-// apps/frontend/src/pages/dashboard/ai-assistant.astro
-import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { getUserCredits } from '../../lib/api';
-import { getSession } from '../../lib/auth';
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { getUserCredits } from "../../lib/api";
+import { getSession } from "../../lib/auth";
+import AIAssistant from "../../components/AIAssistant.jsx";
 
 const session = await getSession(Astro.request);
 if (!session) {
-  return Astro.redirect('/login');
+  return Astro.redirect("/login");
 }
 
 const credits = await getUserCredits(session.user.id);
 ---
 
 <DashboardLayout title="AI Assistant">
-  <div class="ai-assistant">
-    <div class="chat-header">
-      <h1>Asistente de IA</h1>
-      <p>Consulta estrategias para mejorar tu canal de YouTube</p>
-      <div class="credits-display">
-        <span class="credits-label">Créditos disponibles:</span>
-        <span class="credits-value">{credits.toLocaleString()}</span>
-      </div>
-    </div>
-
-    <div id="chat-container" class="chat-container">
-      <div class="message ai">
-        <div class="avatar">🤖</div>
-        <div class="bubble">
-          ¡Hola! Soy tu asistente especializado en YouTube. Puedo ayudarte con:
-          <ul>
-            <li>Estrategias para aumentar suscriptores</li>
-            <li>Optimización de títulos y descripciones</li>
-            <li>Análisis de tendencias de contenido</li>
-            <li>Ideas para mejorar el engagement</li>
-          </ul>
-          Cada consulta cuesta 100 créditos. ¿En qué puedo ayudarte hoy?
-        </div>
-      </div>
-    </div>
-
-    <div class="input-area">
-      <input 
-        type="text" 
-        id="message-input" 
-        placeholder="Escribe tu mensaje..." 
-        disabled={credits < 100}
-      />
-      <button id="send-button" class="btn" disabled={credits < 100}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <script>
-    // Elementos del DOM
-    const chatContainer = document.getElementById('chat-container');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const creditsValue = document.querySelector('.credits-value');
-    let currentCredits = <%= credits %>;
-    
-    // Función para añadir mensaje al chat
-    function addMessage(sender, text) {
-      const messageDiv = document.createElement('div');
-      messageDiv.classList.add('message', sender);
-      
-      const avatar = document.createElement('div');
-      avatar.classList.add('avatar');
-      avatar.textContent = sender === 'user' ? '👤' : '🤖';
-      
-      const bubble = document.createElement('div');
-      bubble.classList.add('bubble');
-      bubble.innerHTML = text;
-      
-      messageDiv.appendChild(avatar);
-      messageDiv.appendChild(bubble);
-      chatContainer.appendChild(messageDiv);
-      
-      // Scroll al último mensaje
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-    
-    // Función para enviar mensaje
-    async function sendMessage() {
-      const message = messageInput.value.trim();
-      if (!message || currentCredits < 100) return;
-      
-      // Añadir mensaje del usuario
-      addMessage('user', message);
-      messageInput.value = '';
-      messageInput.disabled = true;
-      sendButton.disabled = true;
-      
-      try {
-        // Enviar mensaje al backend
-        const response = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ message })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Error en la respuesta del servidor');
-        }
-        
-        const data = await response.json();
-        
-        // Añadir respuesta de la IA
-        addMessage('ai', data.response);
-        
-        // Actualizar créditos
-        currentCredits -= 100;
-        creditsValue.textContent = currentCredits.toLocaleString();
-        
-      } catch (error) {
-        addMessage('ai', `⚠️ Error: ${error.message}. Por favor intenta nuevamente.`);
-      } finally {
-        messageInput.disabled = currentCredits < 100;
-        sendButton.disabled = currentCredits < 100;
-        messageInput.focus();
-      }
-    }
-    
-    // Event listeners
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-  </script>
+  <AIAssistant client:only="react" initialCredits={credits} />
 </DashboardLayout>
 
 <style>
@@ -349,15 +229,15 @@ const credits = await getUserCredits(session.user.id);
       height: calc(100vh - 100px);
       border-radius: 0;
     }
-    
+
     .message {
       max-width: 90%;
     }
-    
+
     .input-area {
       padding: 12px;
     }
-    
+
     .input-area input {
       padding: 12px 15px;
     }
