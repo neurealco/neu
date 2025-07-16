@@ -1,25 +1,14 @@
-// apps/backend/src/controllers/theorem.controller.ts
-import { Request, Response } from 'express';
-import { addCredits } from '../services/credits.service';
-import logger from '../utils/logger.util';
+import { Request, Response } from "express";
+import { handleWebhook } from "../services/theorem.service";
+import logger from "../utils/logger.util";
 
-export const handleWebhook = async (req: Request, res: Response) => {
+export const theoremWebhook = async (req: Request, res: Response) => {
   try {
-    const payload = req.body as TheoremReachWebhook;
-    
-    if (payload.status === 'completed') {
-      await addCredits(
-        payload.user_id, 
-        payload.amount,
-        `Survey completed: ${payload.survey_id}`
-      );
-      
-      logger.info(`Credits added to user: ${payload.user_id}, amount: ${payload.amount}`);
-    }
-    
-    res.send('OK');
+    await handleWebhook(req, res);
   } catch (error) {
-    logger.error(`Theorem webhook failed: ${error.message}`);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    // Convertir error a tipo Error para obtener el mensaje
+    const err = error as Error;
+    logger.error(`Theorem webhook failed: ${err.message}`);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

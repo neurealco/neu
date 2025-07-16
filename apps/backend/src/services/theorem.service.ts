@@ -3,6 +3,7 @@ import config from "../config";
 import { addCredits } from "./credits.service";
 import { TheoremReachWebhook } from "../types/custom";
 import logger from "../utils/logger.util";
+import { Request, Response } from "express";
 
 // Generar URL para iframe de encuestas
 export const generateSurveyUrl = (userId: string) => {
@@ -38,21 +39,34 @@ export const handleSurveyComplete = async (payload: TheoremReachWebhook) => {
 // Controlador para webhook de Theorem
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
-    const signature = req.headers["x-theoremreach-signature"] as string;
+    // Obtener firma del header
+    const signature = req.header("x-theoremreach-signature");
+
+    // Verificar que existe la firma
+    if (!signature) {
+      return res.status(401).json({ error: "Missing signature header" });
+    }
+
     const payload = req.body as TheoremReachWebhook;
 
+    // Verificar la firma
     if (!verifyWebhook(payload, signature)) {
       return res.status(401).json({ error: "Invalid signature" });
     }
 
+    // Procesar solo encuestas completadas
     if (payload.status === "completed") {
       await handleSurveyComplete(payload);
     }
 
-    res.send("OK");
+    // Responder con OK
+    res.status(200).send("OK");
   } catch (error) {
+    // Convertir error a tipo Error para obtener el mensaje
     const err = error as Error;
-    logger.error(`Theorem webhook failed: ${err.message}`);
+    logger.error(`Theorem webhook failed: ${err.message}`, {
+      stack: err.stack,
+    });
     res.status(500).json({ error: "Webhook processing failed" });
   }
 };
