@@ -1,29 +1,34 @@
+# Etapa de construcción
 FROM node:18-alpine AS builder
+
 WORKDIR /app
 
-# Copiar archivos esenciales para instalar dependencias
+# Copiar archivos necesarios para instalar dependencias
 COPY package.json pnpm-lock.yaml ./
 COPY apps/frontend/package.json ./apps/frontend/package.json
 
-# Instalar pnpm y dependencias
+# Instalar pnpm globalmente
 RUN npm install -g pnpm
+
+# Instalar dependencias del frontend
 RUN pnpm install --frozen-lockfile
 
-# Copiar aplicación
-COPY . .
+# Copiar el código del frontend
+COPY apps/frontend ./apps/frontend
 
-# Construir aplicación
-RUN pnpm run build
+# Construir el frontend usando npx
+RUN cd apps/frontend && npx astro build
 
-# Imagen de producción
+# Etapa de producción
 FROM node:18-alpine
+
 WORKDIR /app
 
-# Copiar solo lo necesario para producción
+# Copiar el código construido
 COPY --from=builder /app/apps/frontend/dist ./dist
-COPY --from=builder /app/apps/frontend/package.json .
-COPY --from=builder /app/node_modules ./node_modules
 
-# Puerto y comando
+# Instalar un servidor estático (por ejemplo, serve)
+RUN npm install -g serve
+
 EXPOSE 3000
-CMD ["node", "./dist/server/entry.mjs"]
+CMD ["serve", "-s", "dist", "-l", "3000"]
