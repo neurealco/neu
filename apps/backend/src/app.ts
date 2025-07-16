@@ -8,7 +8,6 @@ import { apiRateLimiter } from "./utils/rateLimit.util";
 
 const app = express();
 
-// Middleware
 app.use(
   cors({
     origin: config.SITE_URL,
