@@ -1,5 +1,5 @@
 import { Router } from "express";
-import authRoutes from "./auth.routes";
+import { authRoutes } from "./auth.routes";
 import creditsRoutes from "./credits.routes";
 import dashboardRoutes from "./dashboard.routes";
 import theoremRoutes from "./theorem.routes";
