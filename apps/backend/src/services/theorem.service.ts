@@ -1,31 +1,58 @@
-import crypto from 'crypto';
-import config from '../config';
-import { addCredits } from './credits.service';
+import crypto from "crypto";
+import config from "../config";
+import { addCredits } from "./credits.service";
+import { TheoremReachWebhook } from "../types/custom";
+import logger from "../utils/logger.util";
 
 // Generar URL para iframe de encuestas
 export const generateSurveyUrl = (userId: string) => {
-  const baseUrl = 'https://survey.theoremreach.com';
+  const baseUrl = "https://survey.theoremreach.com";
   const params = new URLSearchParams({
     uid: userId,
-    pid: '23884',
-    appid: '23884',
-    apikey: config.THEOREM_API_KEY
+    pid: "23884",
+    appid: "23884",
+    apikey: config.THEOREM_API_KEY,
   });
-  
+
   return `${baseUrl}?${params.toString()}`;
 };
 
 // Verificar webhook de Theorem Reach
 export const verifyWebhook = (payload: any, signature: string) => {
-  const hmac = crypto.createHmac('sha256', config.THEOREM_SECRET);
+  const hmac = crypto.createHmac("sha256", config.THEOREM_SECRET);
   hmac.update(JSON.stringify(payload));
-  const digest = hmac.digest('hex');
+  const digest = hmac.digest("hex");
   return digest === signature;
 };
 
 // Procesar evento de encuesta completada
-export const handleSurveyComplete = async (payload: any) => {
-  const { user_id, amount } = payload;
+export const handleSurveyComplete = async (payload: TheoremReachWebhook) => {
+  const { user_id, amount, survey_id } = payload;
+
   // Conversión 1:1 (1000 puntos = 1000 créditos)
-  await addCredits(user_id, amount);
+  await addCredits(user_id, amount, `Survey completed: ${survey_id}`);
+
+  logger.info(`Credits added to user: ${user_id}, amount: ${amount}`);
+};
+
+// Controlador para webhook de Theorem
+export const handleWebhook = async (req: Request, res: Response) => {
+  try {
+    const signature = req.headers["x-theoremreach-signature"] as string;
+    const payload = req.body as TheoremReachWebhook;
+
+    if (!verifyWebhook(payload, signature)) {
+      return res.status(401).json({ error: "Invalid signature" });
+    }
+
+    if (payload.status === "completed") {
+      await handleSurveyComplete(payload);
+    }
+
+    res.send("OK");
+  } catch (error) {
+    const err = error as Error;
+    logger.error(`Theorem webhook failed: ${err.message}`);
+    res.status(500).json({ error: "Webhook processing failed" });
+  }
 };
