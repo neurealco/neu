@@ -1,6 +1,6 @@
-import { google } from 'googleapis';
-import config from '../config';
-import { supabase } from './supabase.service';
+import { google } from "googleapis";
+import config from "../config";
+import { supabase } from "./supabase.service";
 
 const oauth2Client = new google.auth.OAuth2(
   config.GOOGLE_CLIENT_ID,
@@ -10,46 +10,57 @@ const oauth2Client = new google.auth.OAuth2(
 
 export const getAuthUrl = () => {
   return oauth2Client.generateAuthUrl({
-    access_type: 'offline',
+    access_type: "offline",
     scope: [
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/youtube.readonly',
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/youtube.readonly",
     ],
-    prompt: 'consent',
+    prompt: "consent",
   });
 };
 
 export const handleCallback = async (code: string) => {
-  const { tokens } = await oauth2Client.getToken(code);
-  oauth2Client.setCredentials(tokens);
-  
-  // Obtener info de usuario
-  const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-  const { data } = await oauth2.userinfo.get();
-  
-  // Registrar/actualizar usuario en Supabase
-  const { user, error } = await supabase.auth.api.createUser({
-    email: data.email!,
-    email_confirm: true,
-    user_metadata: {
-      name: data.name,
-      picture: data.picture,
-      youtube_connected: true
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    // Obtener info de usuario
+    const oauth2 = google.oauth2({
+      version: "v2",
+      auth: oauth2Client,
+    });
+
+    const { data } = await oauth2.userinfo.get();
+
+    // Registrar/actualizar usuario en Supabase usando la API admin
+    const { data: userData, error } = await supabase.auth.admin.createUser({
+      email: data.email!,
+      email_confirm: true,
+      user_metadata: {
+        name: data.name,
+        picture: data.picture,
+        youtube_connected: true,
+      },
+    });
+
+    if (error || !userData.user) {
+      throw new Error(error?.message || "User creation failed");
     }
-  });
-  
-  if (error) throw new Error(error.message);
-  
-  // Guardar tokens de YouTube
-  await supabase
-    .from('user_tokens')
-    .upsert({
-      user_id: user!.id,
+
+    const user = userData.user;
+
+    // Guardar tokens de YouTube
+    await supabase.from("user_tokens").upsert({
+      user_id: user.id,
       youtube_access_token: tokens.access_token,
       youtube_refresh_token: tokens.refresh_token,
       youtube_expiry: tokens.expiry_date,
     });
-  
-  return user;
+
+    return user;
+  } catch (error) {
+    const err = error as Error;
+    throw new Error(`Authentication failed: ${err.message}`);
+  }
 };
