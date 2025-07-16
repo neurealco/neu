@@ -3,9 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
-    "build": "pnpm --filter backend build && pnpm --filter frontend build",
-    "start": "pnpm --filter backend start",
-    "docker:build": "docker-compose build",
+    "build": "pnpm --filter backend build && pnpm --filter frontend build",    "docker:build": "docker-compose build",
     "docker:up": "docker-compose up",
     "docker:down": "docker-compose down",
     "docker:prod": "docker-compose -f docker-compose.prod.yml up",
