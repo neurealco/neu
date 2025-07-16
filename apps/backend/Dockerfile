@@ -1,26 +1,31 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Instalar dependencias
+# 1. Copiar archivos esenciales para instalar dependencias
 COPY package.json pnpm-lock.yaml ./
+COPY apps/frontend/package.json ./apps/frontend/package.json
+
+# 2. Instalar pnpm globalmente y configurar el almacenamiento
 RUN npm install -g pnpm
+RUN pnpm config set store-dir /pnpm-store
+
+# 3. Instalar todas las dependencias (incluyendo las del frontend)
 RUN pnpm install --frozen-lockfile
 
-# Construir aplicación
+# 4. Copiar todo el código fuente
 COPY . .
-RUN pnpm build
+
+# 5. Construir ambas aplicaciones (usando npx para acceder a los binarios)
+RUN pnpm exec --recursive build
 
 # Imagen de producción
 FROM node:18-alpine
 WORKDIR /app
 
-# Copiar dependencias de producción
-COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
-RUN npm install -g pnpm
-RUN pnpm install --prod --frozen-lockfile
-
-# Copiar aplicación construida
-COPY --from=builder /app/dist ./dist
+# Copiar solo lo necesario para producción
+COPY --from=builder /app/apps/backend/dist ./dist
+COPY --from=builder /app/apps/backend/package.json .
+COPY --from=builder /app/node_modules ./node_modules
 
 # Variables de entorno
 ENV NODE_ENV=production

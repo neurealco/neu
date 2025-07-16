@@ -1,9 +1,8 @@
-import { Router } from 'express';
-import { handleWebhook } from '../controllers/theorem.controller';
-import { webhookValidator } from '../middleware/validate.middleware';
+import { Router } from "express";
+import { theoremWebhook } from "../controllers/theorem.controller"; // Importación corregida
 
 const router = Router();
 
-router.post('/webhook', webhookValidator, handleWebhook);
+router.post("/webhook", theoremWebhook);
 
 export default router;
