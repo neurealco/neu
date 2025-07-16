@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import * as cookieParser from "cookie-parser";
+import cookieParser from "cookie-parser"; // Cambiado a import default
 import config from "./config";
 import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";

@@ -15,11 +15,11 @@ declare global {
     views: string;
     videos: string;
   }
+}
 
-  interface TheoremReachWebhook {
-    user_id: string;
-    amount: number;
-    survey_id: string;
-    status: "completed" | "terminated";
-  }
+export interface TheoremReachWebhook {
+  user_id: string;
+  amount: number;
+  survey_id: string;
+  status: "completed" | "terminated";
 }
