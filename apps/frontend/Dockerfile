@@ -3,25 +3,21 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# 1. Copiar solo los archivos esenciales del frontend
-COPY apps/frontend/package.json ./package.json
-COPY apps/frontend/pnpm-lock.yaml ./pnpm-lock.yaml
+# 1. Copiar archivos esenciales de la raíz del proyecto
+COPY package.json pnpm-lock.yaml ./
+COPY apps/frontend/package.json ./apps/frontend/package.json
 
 # 2. Instalar pnpm globalmente
 RUN npm install -g pnpm
 
-# 3. Instalar dependencias locales del frontend
+# 3. Instalar dependencias usando el lockfile raíz
 RUN pnpm install --frozen-lockfile
 
 # 4. Copiar todo el código del frontend
-COPY apps/frontend/ ./
+COPY apps/frontend ./apps/frontend
 
-# 5. Crear enlaces simbólicos para resolver problemas de módulos
-RUN rm -rf node_modules/astro
-RUN pnpm install astro@latest --save-exact
-
-# 6. Construir el frontend usando la ruta local
-RUN npx astro build
+# 5. Construir el frontend usando la ruta local
+RUN cd apps/frontend && ../node_modules/.bin/astro build
 
 # Etapa de producción
 FROM node:18-alpine
@@ -29,9 +25,9 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copiar el código construido
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/apps/frontend/dist ./dist
 
-# Instalar un servidor estático ligero
+# Instalar un servidor estático (http-server)
 RUN npm install -g http-server
 
 EXPOSE 3000
