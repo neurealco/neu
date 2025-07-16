@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import config from "./config";
 import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
-import { apiRateLimiter } from "./utils/rateLimit.util";
+import { apiRateLimiter, rateLimitMiddleware } from "./utils/rateLimit.util";
 
 const app = express();
 
@@ -16,12 +16,9 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-app.use(rateLimiter);
+app.use(rateLimitMiddleware(apiRateLimiter));
 
-// Routes
 app.use("/api", routes);
-
-// Error handling
 app.use(errorHandler);
 
 export default app;
