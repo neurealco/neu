@@ -1,7 +1,7 @@
 ---
 const { stats } = Astro.props;
-const maxValue = Math.max(...stats.daily_data.map(d => d.new_subscribers));
-const minValue = Math.min(...stats.daily_data.map(d => d.new_subscribers));
+const maxValue = Math.max(...stats.daily_data.map((d) => d.new_subscribers));
+const minValue = Math.min(...stats.daily_data.map((d) => d.new_subscribers));
 ---
 
 <div class="youtube-stats">
@@ -13,7 +13,14 @@ const minValue = Math.min(...stats.daily_data.map(d => d.new_subscribers));
         <span class="stat-label">Total</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">+{stats.daily_data.reduce((acc, day) => acc + parseInt(day.new_subscribers), 0)}</span>
+        <span class="stat-value"
+          >+{
+            stats.daily_data.reduce(
+              (acc, day) => acc + parseInt(day.new_subscribers),
+              0
+            )
+          }</span
+        >
         <span class="stat-label">Last 7 days</span>
       </div>
     </div>
@@ -21,18 +28,25 @@ const minValue = Math.min(...stats.daily_data.map(d => d.new_subscribers));
 
   <div class="chart-container">
     <div class="chart-bars">
-      {stats.daily_data.map((data) => {
-        const height = ((data.new_subscribers - minValue) / (maxValue - minValue)) * 80;
-        return (
-          <div
-            class="chart-bar"
-            style={`height: ${height}%`}
-            data-value={data.new_subscribers.toLocaleString()}
-          >
-            <span class="bar-label">{new Date(data.date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
-          </div>
-        );
-      })}
+      {
+        stats.daily_data.map((data) => {
+          const height =
+            ((data.new_subscribers - minValue) / (maxValue - minValue)) * 80;
+          return (
+            <div
+              class="chart-bar"
+              style={`height: ${height}%`}
+              data-value={data.new_subscribers.toLocaleString()}
+            >
+              <span class="bar-label">
+                {new Date(data.date).toLocaleDateString("en-US", {
+                  weekday: "short",
+                })}
+              </span>
+            </div>
+          );
+        })
+      }
     </div>
   </div>
 </div>
