@@ -1,20 +1,20 @@
 FROM nginx:1.25-alpine
 
-# Install Certbot and cron
+# Instalar Certbot y dependencias
 RUN apk add --no-cache certbot certbot-nginx bash curl && \
     mkdir -p /var/www/certbot
 
-# Remove default config
+# Eliminar configuración por defecto
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy custom configuration
+# Copiar configuración personalizada
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy init script
+# Copiar script de inicialización
 COPY init.sh /init.sh
 RUN chmod +x /init.sh
 
-# SSL certificates directory
+# Directorio para certificados SSL
 VOLUME /etc/letsencrypt
 
 # Health check
