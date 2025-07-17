@@ -1,38 +1,27 @@
-# Etapa 1: Construcción
+# Builder stage
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copia solo los archivos necesarios para instalar dependencias primero (cache n capas de Docker)
-COPY apps/frontend/package.json apps/frontend/pnpm-lock.yaml ./
+# Copiar TODOS los archivos del workspace
+COPY . .
 
-# Instala pnpm global y dependencias del frontend
-RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile
+# Instalar dependencias globales y de workspace
+RUN npm install -g pnpm && \
+    pnpm install --frozen-lockfile
 
-# Copia el código fuente de tu frontend
-COPY apps/frontend ./apps/frontend
+# Build específico del backend
+RUN cd apps/backend && pnpm run build
 
-# Ejecuta el build de Astro (usa SSR)
-WORKDIR /app/apps/frontend
-RUN pnpm build
-
-# Etapa 2: Producción
+# Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copia los archivos necesarios SOLO de producción
-COPY apps/frontend/package.json apps/frontend/pnpm-lock.yaml ./
-RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile --prod
+# Copiar solo lo necesario
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/backend/dist ./dist
+COPY --from=builder /app/apps/backend/package.json .
 
-# Copia el resultado del build desde el builder
-COPY --from=builder /app/apps/frontend/dist ./dist
-
-WORKDIR /app/apps/frontend
-
-EXPOSE 3000
-
-# Ejecuta el server SSR de Astro
-CMD ["node", "./dist/server/entry.mjs"]
+EXPOSE 8000
+CMD ["node", "dist/server.js"]
