@@ -1,0 +1,153 @@
+version: "2.0"
+
+services:
+  proxy:
+    image: ghcr.io/neurealco/neurealco-proxy:latest
+    imagePullSecrets:
+      - name: ghcr-secret
+    expose:
+      - port: 80
+        as: 80
+        accept:
+          - neureal.site
+        to:
+          - global: true
+      - port: 443
+        as: 443
+        accept:
+          - neureal.site
+        to:
+          - global: true
+    env:
+      - FRONTEND_URL=http://frontend:3000
+      - BACKEND_URL=http://backend:8000
+      - DOMAIN=neureal.site
+    resources:
+      cpu: 0.1
+      memory: 128Mi
+      storage: 64Mi
+    parameters:
+      storage:
+        - mount: /etc/letsencrypt
+          size: 64Mi
+
+  frontend:
+    image: ghcr.io/neurealco/neurealco-frontend:latest
+    imagePullSecrets:
+      - name: ghcr-secret
+    env:
+      - PUBLIC_BACKEND_URL=https://neureal.site/api
+      - PUBLIC_SITE_URL=https://neureal.site
+      - PUBLIC_SUPABASE_URL=your_supabase_url
+      - PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    resources:
+      cpu: 0.5
+      memory: 512Mi
+      storage: 512Mi
+    depends_on:
+      - proxy
+
+  backend:
+    image: ghcr.io/neurealco/neurealco-backend:latest
+    imagePullSecrets:
+      - name: ghcr-secret
+    env:
+      - SUPABASE_URL=tu_url_supabase
+      - SUPABASE_SECRET=tu_secreto_supabase
+      - GOOGLE_CLIENT_ID=tu_client_id_google
+      - GOOGLE_CLIENT_SECRET=tu_client_secret_google
+      - HUGGINGFACE_API_KEY=tu_api_key_hf
+      - THEOREM_API_KEY=tu_api_key_theorem
+      - THEOREM_SECRET=tu_secreto_theorem
+      - JWT_SECRET=tu_secreto_jwt
+      - REDIS_URL=redis://redis:6379
+      - SITE_URL=https://neureal.site
+      - NODE_ENV=production
+    resources:
+      cpu: 1.0
+      memory: 1Gi
+      storage: 1Gi
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    resources:
+      cpu: 0.5
+      memory: 256Mi
+      storage: 256Mi
+    parameters:
+      storage:
+        - mount: /data
+          size: 256Mi
+
+profiles:
+  compute:
+    proxy:
+      resources:
+        cpu:
+          units: 0.1
+        memory:
+          size: 128Mi
+        storage:
+          size: 64Mi
+    frontend:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          size: 512Mi
+    backend:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 1Gi
+        storage:
+          size: 1Gi
+    redis:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 256Mi
+        storage:
+          size: 256Mi
+
+  placement:
+    global:
+      attributes:
+        region: any
+      pricing:
+        proxy:
+          denom: uakt
+          amount: 100
+        frontend:
+          denom: uakt
+          amount: 500
+        backend:
+          denom: uakt
+          amount: 1000
+        redis:
+          denom: uakt
+          amount: 300
+
+deployment:
+  proxy:
+    global:
+      profile: proxy
+      count: 1
+  frontend:
+    global:
+      profile: frontend
+      count: 1
+  backend:
+    global:
+      profile: backend
+      count: 1
+  redis:
+    global:
+      profile: redis
+      count: 1
