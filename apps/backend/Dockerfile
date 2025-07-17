@@ -1,37 +1,39 @@
-# Etapa de construcción
+# Builder stage
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copiar archivos necesarios para instalar dependencias
+# Copy lock files first for better caching
 COPY package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/package.json
 
-# Instalar pnpm globalmente
-RUN npm install -g pnpm
+# Install dependencies
+RUN npm install -g pnpm && \
+    pnpm install --frozen-lockfile --prod
 
-# Instalar dependencias del backend
-RUN pnpm install --frozen-lockfile
-
-# Copiar el código del backend
+# Copy source code
 COPY apps/backend ./apps/backend
 
-# Construir el backend
+# Build the app
 RUN cd apps/backend && pnpm run build
 
-# Etapa de producción
+# Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar el código construido y dependencias
+# Copy built files and dependencies
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/apps/backend/package.json .
-COPY --from=builder /app/node_modules ./node_modules
 
-# Variables de entorno
+# Environment variables (will be set in Akash SDL)
 ENV NODE_ENV=production
 ENV PORT=8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s \
+    CMD wget --spider http://localhost:8000/health || exit 1
 
 EXPOSE 8000
 CMD ["node", "dist/server.js"]
