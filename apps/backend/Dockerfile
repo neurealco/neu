@@ -3,7 +3,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copia TODO lo necesario para la instalación y compilación
-COPY . .  # (incluye package.json, pnpm-lock.yaml, pnpm-workspace.yaml y código fuente)
+COPY . .
 
 # Instala todas las dependencias, incluidas las de desarrollo
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
