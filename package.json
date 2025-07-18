@@ -10,6 +10,7 @@
     "deploy:akash": "bash deploy-akash.sh"
   },
   "devDependencies": {
+    "typescript": "^5.4.0",
     "@types/axios": "^0.14.4",
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
