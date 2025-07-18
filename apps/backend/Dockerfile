@@ -15,7 +15,7 @@ RUN npm install -g pnpm && \
 COPY apps/backend ./apps/backend
 
 # Build the app
-RUN cd apps/backend && pnpm run build
+RUN pnpm --filter ./apps/backend... run build
 
 # Production stage
 FROM node:18-alpine
