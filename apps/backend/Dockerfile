@@ -9,7 +9,7 @@ COPY apps/backend/package.json ./apps/backend/package.json
 
 # Install dependencies
 RUN npm install -g pnpm && \
-    pnpm install --frozen-lockfile --prod
+    pnpm install --frozen-lockfile
 
 # Copy source code
 COPY apps/backend ./apps/backend
