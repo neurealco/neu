@@ -7,14 +7,14 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/package.json
 
-# Install dependencies
+# Install dependencies (incluye devDependencies)
 RUN npm install -g pnpm && \
     pnpm install --frozen-lockfile
 
 # Copy source code
 COPY apps/backend ./apps/backend
 
-# Build the app
+# Build the app usando el filtro de pnpm
 RUN pnpm --filter ./apps/backend... run build
 
 # Production stage
