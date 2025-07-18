@@ -1,33 +1,21 @@
-# Builder stage
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copia sólo los archivos de dependencias principales primero para aprovechar el cache
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copia TODO lo necesario para la instalación y compilación
+COPY . .  # (incluye package.json, pnpm-lock.yaml, pnpm-workspace.yaml y código fuente)
 
-# Copia TODOS los package.json de los workspaces (opcional, pero recomendado, para mejor cache)
-COPY apps/backend/package.json ./apps/backend/package.json
-# Si tienes más packages: COPY apps/otro/package.json ./apps/otro/package.json
-# Si tienes libs: COPY libs/loquesea/package.json ./libs/loquesea/package.json
-
-# Instala TODAS las dependencias (ahora sí PNPM puede resolver workspace correctamente)
+# Instala todas las dependencias, incluidas las de desarrollo
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
-# Copia el RESTO del monorepo que se requiere para build
-COPY . .
-
-# Compila usando pnpm exec, o pnpm --filter si lo necesitas explícito
+# Compila el backend usando el binario de la raíz
 RUN pnpm exec tsc -p apps/backend/tsconfig.json
-# o
-# RUN pnpm --filter "./apps/backend" run build
 
-# Production stage
+# Production stage (solo copia los artefactos y node_modules necesarios)
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copia solo los artefactos necesarios de build/producción
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/apps/backend/package.json .
