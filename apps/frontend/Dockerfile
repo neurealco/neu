@@ -1,27 +1,36 @@
-# Builder stage
+# Etapa de build
 FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copiar TODOS los archivos del workspace
+# 1. Copia solo los archivos de dependencias para caché eficiente
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
+COPY apps/frontend/package.json ./apps/frontend/package.json
+
+# 2. Instala dependencias
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
+
+# 3. Copia todo el resto del código
 COPY . .
 
-# Instalar dependencias globales y de workspace
-RUN npm install -g pnpm && \
-    pnpm install --frozen-lockfile
+# 4. Compila el frontend Astro (SSR)
+RUN pnpm --filter ./apps/frontend... build
 
-# Build específico del backend
-RUN cd apps/backend && pnpm run build
-
-# Production stage
+# Etapa de producción
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar solo lo necesario
+# Copia sólo los artefactos y dependencias necesarios
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/apps/backend/package.json .
+COPY --from=builder /app/apps/frontend/dist ./dist
+COPY --from=builder /app/apps/frontend/package.json .
 
-EXPOSE 8000
-CMD ["node", "dist/server.js"]
+# Cambia la ruta al adaptador (server) según la configuración de Astro
+# En SSR, normalmente es dist/server/entry.mjs
+COPY --from=builder /app/apps/frontend/dist/server ./dist/server
+
+EXPOSE 3000
+
+# Cambia este comando si tu server principal es diferente
+CMD ["node", "dist/server/entry.mjs"]
