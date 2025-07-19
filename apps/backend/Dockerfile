@@ -2,16 +2,16 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copia TODO lo necesario para la instalación y compilación
-COPY . .
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 
-# Instala todas las dependencias, incluidas las de desarrollo
+COPY apps/backend/package.json ./apps/backend/package.json
+
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
-# Compila el backend usando el binario de la raíz
+COPY . .
+
 RUN pnpm exec tsc -p apps/backend/tsconfig.json
 
-# Production stage (solo copia los artefactos y node_modules necesarios)
 FROM node:18-alpine
 
 WORKDIR /app
