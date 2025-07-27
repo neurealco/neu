@@ -8,8 +8,11 @@ RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Frontend ----------
 FROM deps AS builder
-# CORRECCIÓN: Usar rutas relativas al contexto
 COPY ./apps/frontend ./apps/frontend
+
+# Diagnóstico y build
+RUN pwd && ls -la && ls -la apps/frontend
+RUN apt-get update && apt-get install -y build-essential
 RUN pnpm --filter frontend build
 
 # ---------- Etapa 3: Imagen Final ----------
