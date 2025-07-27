@@ -31,7 +31,7 @@ export const authCallback = async (req: Request, res: Response) => {
       secure: config.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: "lax",
-      domain: config.SITE_URL.replace("https://", "").replace("http://", ""),
+      domain: new URL(config.SITE_URL).hostname,
     });
 
     res.redirect("/dashboard");
@@ -58,7 +58,7 @@ export const getSession = (req: Request, res: Response) => {
 
 export const logout = (req: Request, res: Response) => {
   res.clearCookie("token", {
-    domain: config.SITE_URL.replace("https://", "").replace("http://", ""),
+    domain: new URL(config.SITE_URL).hostname,
     path: "/",
   });
   res.status(200).json({ message: "Logged out successfully" });
