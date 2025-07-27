@@ -8,8 +8,11 @@ RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Backend ----------
 FROM deps AS builder
-# CORRECCIÓN: Usar rutas relativas al contexto
 COPY ./apps/backend ./apps/backend
+
+# Diagnóstico y build
+RUN pwd && ls -la && ls -la apps/backend
+RUN apt-get update && apt-get install -y build-essential
 RUN pnpm --filter backend build
 
 # ---------- Etapa 3: Imagen Final ----------

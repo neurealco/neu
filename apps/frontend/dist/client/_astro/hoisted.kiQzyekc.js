@@ -1,3 +1,0 @@
-document.getElementById("refresh-stats").addEventListener("click",async()=>{try{const e=await fetch(`${API_BASE_URL}/dashboard/refresh`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"}});if(!e.ok){const s=await e.json();throw new Error(s.error||"Failed to refresh stats")}const r=await e.json();if(r.success)alert("Stats refreshed successfully!"),window.location.reload();else throw new Error(r.message||"Refresh failed")}catch(e){console.error("Refresh error:",e),e.message.includes("Insufficient credits")?alert(`Error: ${e.message}
-
-Please complete surveys to earn more credits.`):alert(e.message||"Error refreshing stats")}});
