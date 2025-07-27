@@ -8,7 +8,7 @@ RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Frontend ----------
 FROM deps AS builder
-COPY ./apps/frontend ./apps/frontend
+COPY . .
 
 # Diagnóstico y build
 RUN pwd && ls -la && ls -la apps/frontend
