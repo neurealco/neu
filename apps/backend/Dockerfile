@@ -1,22 +1,40 @@
-# Backend Dockerfile (/apps/backend/Dockerfile)
-FROM node:18-bookworm AS builder
+# ---------- Etapa 1: Instalación de dependencias ----------
+FROM node:18-bookworm AS deps
 
-# Instalar herramientas esenciales
+# 1. Configurar entorno y herramientas
 RUN apt-get update && apt-get install -y python3 make g++ git
 
+# 2. Crear directorio de trabajo
 WORKDIR /app
 
-# Copiar TODO el proyecto
-COPY ../.. .
+# 3. Copiar SOLO archivos necesarios para dependencias
+COPY package.json pnpm-lock.yaml .npmrc ./
 
-# Configurar PNPM
+# 4. Instalar PNPM y dependencias básicas
 RUN npm install -g pnpm
 RUN pnpm install --frozen-lockfile
+
+# ---------- Etapa 2: Build del Backend ----------
+FROM deps AS builder
+
+# 1. Copiar solo lo necesario para el backend
+COPY apps/backend apps/backend
+COPY libs libs  # Si tienes librerías compartidas
+
+# 2. Instalar dependencias específicas del backend
+RUN pnpm --filter backend install
+
+# 3. Construir aplicación
 RUN pnpm --filter backend build
 
-FROM node:18-alpine
+# ---------- Etapa 3: Imagen Final ----------
+FROM node:18-alpine AS runner
 WORKDIR /app
+
+# 1. Copiar artefactos de construcción
 COPY --from=builder /app/apps/backend/dist ./dist
+
+# 2. Copiar dependencias necesarias
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 8000
