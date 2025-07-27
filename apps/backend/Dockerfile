@@ -8,7 +8,7 @@ RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Backend ----------
 FROM deps AS builder
-COPY ./apps/backend ./apps/backend
+COPY . .
 
 # Diagnóstico y build
 RUN pwd && ls -la && ls -la apps/backend
