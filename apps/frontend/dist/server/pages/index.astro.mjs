@@ -1,0 +1,66 @@
+import { c as createComponent, d as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_LK4p-fTz.mjs';
+import { $ as $$MainLayout } from '../chunks/MainLayout_IhB8FdSg.mjs';
+import { $ as $$Header, a as $$Footer } from '../chunks/Footer_BtNhA7pc.mjs';
+export { renderers } from '../renderers.mjs';
+
+const $$Index = createComponent(($$result, $$props, $$slots) => {
+  return renderTemplate`${renderComponent($$result, "MainLayout", $$MainLayout, {}, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="content-wrapper"> ${renderComponent($$result2, "Header", $$Header, {})} <div class="text-and-image"> <div class="text-block"> <p class="neureal-text">NEUREAL</p> <p class="bold-text">Master Social Media Growth In Just A Few Clicks</p> <p class="advanced">
+Advanced, <span class="underlines">yet so simple</span>, so you can
+          just enjoy your tea
+</p> <a href="/" class="cta-button">Launch now</a> </div> <div class="image-container"> <img src="assets/images/mh1.webp" alt="img"> </div> </div> <p class="cps">Make the algorithm as something easy</p> <p class="cp">
+A platform designed to optimize content creators' channels and videos
+      using artificial intelligence. It offers intelligent assistants, an
+      updated trends section, a dashboard with metrics such as subscribers,
+      views, and followers, as well as a community with comments and an
+      educational library for strategic moves and growth.
+</p> <section class="grx"> <div class="es2"> <div class="es2h"> <div> <h3 class="es2shd">Access to a Dashboard</h3> <p class="es2shp">
+Watch and improve your results with your dashboard
+</p> </div> <button class="bento-button">
+Discover Now
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left:8px;"> <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white"></path> </svg> </button> </div> <div class="nrimg"> <img src="assets/images/img1.png" alt="feature preview"> </div> </div> <div class="es2"> <div class="es2h"> <div> <h3 class="es2shd">Get +5 AI Assistants</h3> <p class="es2shp">
+More than 5 well trained AI's assistants to choose and use
+</p> </div> <button class="bento-button">
+Discover Now
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left:8px;"> <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white"></path> </svg> </button> </div> <div class="nrimg"> <img src="assets/images/carsa.jpg" alt="feature preview"> </div> </div> <div class="es2"> <div class="es2h"> <div> <h3 class="es2shd">Access to a Preview</h3> <p class="es2shp">
+Access now to a complete version for free and use it for 20
+              Minutes
+</p> </div> <button class="bento-button">
+Try now
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left:8px;"> <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white"></path> </svg> </button> </div> <div class="nrimg"> <img src="assets/images/carsa.jpg" alt="feature preview"> </div> </div> </section> <section class="grx-2col"> <div class="es2 es2-large"> <div class="es2h"> <div> <h3 class="es2shd">Neureal makes the work easier</h3> <p class="es2shp">
+Learn, optimize and talk in one single place and level up like you
+              wanted with a community with various types of content
+</p> </div> <button class="bento-button">
+Discover now
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left:8px;"> <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white"></path> </svg> </button> </div> <div class="nrimg"> <img src="assets/images/carsa.jpg" alt="Plantillas"> </div> </div> <div class="es2 es2-compact"> <div class="es2h"> <div> <h3 class="es2shd">Join to Neureal</h3> <p class="es2shp">
+Neureal will be oficially set and functional soon
+</p> </div> <button class="bento-button">
+Get now
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left:8px;"> <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white"></path> </svg> </button> </div> <div class="nrimg"> <img src="assets/images/carsa.jpg" alt="Plantillas"> </div> </div> </section> </div> <section class="custom-faqs"> <h2 class="section-title">Common Questions</h2> <div class="accordion-container"> <div class="accordion-item"> <button class="accordion-header">
+How can I use the preview?
+<span class="toggle-icon">+</span> </button> <div class="accordion-content"> <p>Click on the register buttom and choose the preview plan</p> </div> </div> <div class="accordion-item"> <button class="accordion-header">
+How many features are in Neureal?
+<span class="toggle-icon">+</span> </button> <div class="accordion-content"> <p>More than 4 features.</p> </div> </div> <div class="accordion-item"> <button class="accordion-header">
+Can I comment for each trend?
+<span class="toggle-icon">+</span> </button> <div class="accordion-content"> <p>Yes! and you can also talk with different people</p> </div> </div> <div class="accordion-item"> <button class="accordion-header">
+Can I cancell my suscription?
+<span class="toggle-icon">+</span> </button> <div class="accordion-content"> <p>
+Yes! and you can do it easily but the upfront can't be cancelled or
+            refunded by the nature of the service.
+</p> </div> </div> <div class="accordion-item"> <button class="accordion-header">
+What platforms do you support?
+<span class="toggle-icon">+</span> </button> <div class="accordion-content"> <p>Currently Instagram and YouTube</p> </div> </div> </div> </section> ${renderComponent($$result2, "Footer", $$Footer, {})} ` })}`;
+}, "/workspaces/neu/apps/frontend/src/pages/index.astro", void 0);
+
+const $$file = "/workspaces/neu/apps/frontend/src/pages/index.astro";
+const $$url = "";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$Index,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };
