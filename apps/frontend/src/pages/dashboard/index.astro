@@ -2,9 +2,7 @@
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 import StatsCard from "../../components/dashboard/StatsCard.astro";
 import YouTubeStats from "../../components/dashboard/YouTubeStats.astro";
-import { fetchDashboardData, getSession, refreshStats } from "../../lib/api";
-
-import { API_BASE_URL } from "../../lib/apiConfig";
+import { fetchDashboardData, getSession } from "../../lib/api";
 
 const session = await getSession(Astro.request);
 if (!session) {
@@ -61,17 +59,20 @@ try {
 </DashboardLayout>
 
 <script>
-  document
-    .getElementById("refresh-stats")
-    .addEventListener("click", async () => {
+  const button = document.getElementById("refresh-stats");
+  if (button) {
+    button.addEventListener("click", async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/dashboard/refresh`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json"
+        const response = await fetch(
+          `${import.meta.env.PUBLIC_API_BASE_URL}/dashboard/refresh`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json"
+            }
           }
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -89,14 +90,19 @@ try {
       } catch (error) {
         console.error("Refresh error:", error);
         
+        // Convertir error a tipo Error
+        const err = error as Error;
+        let errorMessage = err.message || "Error refreshing stats";
+        
         // Manejo especial para errores de créditos insuficientes
-        if (error.message.includes("Insufficient credits")) {
-          alert(`Error: ${error.message}\n\nPlease complete surveys to earn more credits.`);
-        } else {
-          alert(error.message || "Error refreshing stats");
+        if (err.message.includes("Insufficient credits")) {
+          errorMessage = `${err.message}\n\nPlease complete surveys to earn more credits.`;
         }
+        
+        alert(errorMessage);
       }
     });
+  }
 </script>
 
 <style>
