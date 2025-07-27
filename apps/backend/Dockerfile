@@ -3,7 +3,7 @@ FROM node:18-bookworm AS deps
 RUN apt-get update && apt-get install -y python3 make g++ git
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm
+RUN npm install -g pnpm@7.18.1
 RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Backend ----------
@@ -13,7 +13,7 @@ COPY . .
 # Diagnóstico y build
 RUN pwd && ls -la && ls -la apps/backend
 RUN apt-get update && apt-get install -y build-essential
-RUN pnpm --filter backend build
+RUN pnpm --filter backend build --reporter=append-only
 
 # ---------- Etapa 3: Imagen Final ----------
 FROM node:18-alpine AS runner
