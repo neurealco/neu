@@ -2,14 +2,31 @@
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 import StatsCard from "../../components/dashboard/StatsCard.astro";
 import YouTubeStats from "../../components/dashboard/YouTubeStats.astro";
-import { fetchDashboardData } from "../../lib/api";
+import { fetchDashboardData, getSession, refreshStats } from "../../lib/api";
+
+// Importar configuración de API
+import { API_BASE_URL } from "../../lib/apiConfig";
 
 const session = await getSession(Astro.request);
 if (!session) {
   return Astro.redirect("/login");
 }
 
-const dashboardData = await fetchDashboardData(session.user.id);
+let dashboardData;
+try {
+  dashboardData = await fetchDashboardData(session.user.id);
+} catch (error) {
+  console.error("Error loading dashboard data:", error);
+  dashboardData = {
+    youtube: {
+      subscribers: "0",
+      views_today: "0",
+      estimated_revenue: "0.00",
+      engagement_rate: "0.0",
+      daily_data: []
+    }
+  };
+}
 ---
 
 <DashboardLayout title="Dashboard">
@@ -21,17 +38,17 @@ const dashboardData = await fetchDashboardData(session.user.id);
   <div class="stats-grid">
     <StatsCard
       title="Subscribers"
-      value={dashboardData.youtube.subscribers}
+      value={dashboardData.youtube.subscribers.toLocaleString()}
       icon="👥"
     />
     <StatsCard
       title="Views Today"
-      value={dashboardData.youtube.views_today}
+      value={dashboardData.youtube.views_today.toLocaleString()}
       icon="👀"
     />
     <StatsCard
       title="Estimated Revenue"
-      value={`$${dashboardData.youtube.estimated_revenue}`}
+      value={`$${parseFloat(dashboardData.youtube.estimated_revenue).toFixed(2)}`}
       icon="💵"
     />
     <StatsCard
@@ -49,18 +66,36 @@ const dashboardData = await fetchDashboardData(session.user.id);
     .getElementById("refresh-stats")
     .addEventListener("click", async () => {
       try {
-        const response = await fetch("/api/dashboard/refresh", {
+        const response = await fetch(`${API_BASE_URL}/dashboard/refresh`, {
           method: "POST",
           credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          }
         });
 
-        if (!response.ok) throw new Error("Failed to refresh stats");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to refresh stats");
+        }
 
-        const data = await response.json();
-        alert("Stats refreshed successfully!");
-        window.location.reload();
+        const result = await response.json();
+        
+        if (result.success) {
+          alert("Stats refreshed successfully!");
+          window.location.reload();
+        } else {
+          throw new Error(result.message || "Refresh failed");
+        }
       } catch (error) {
-        alert(error.message || "Error refreshing stats");
+        console.error("Refresh error:", error);
+        
+        // Manejo especial para errores de créditos insuficientes
+        if (error.message.includes("Insufficient credits")) {
+          alert(`Error: ${error.message}\n\nPlease complete surveys to earn more credits.`);
+        } else {
+          alert(error.message || "Error refreshing stats");
+        }
       }
     });
 </script>
@@ -71,6 +106,44 @@ const dashboardData = await fetchDashboardData(session.user.id);
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 2rem;
+    margin: 0;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  #refresh-stats {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #refresh-stats:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+  }
+
+  #refresh-stats:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 
   .stats-grid {
@@ -94,7 +167,6 @@ const dashboardData = await fetchDashboardData(session.user.id);
     .dashboard-header {
       flex-direction: column;
       align-items: flex-start;
-      gap: 20px;
     }
   }
 </style>

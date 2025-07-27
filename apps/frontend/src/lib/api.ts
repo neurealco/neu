@@ -1,83 +1,118 @@
-export async function fetchDashboardData(userId: string) {
+import { API_BASE_URL } from './apiConfig';
+
+export const getUserCredits = async (userId: string) => {
   try {
-    const response = await fetch(`/api/dashboard?userId=${userId}`, {
-      credentials: "include",
+    const response = await fetch(`${API_BASE_URL}/credits/balance?userId=${userId}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
-    return await response.json();
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch credits');
+    }
+    
+    const data = await response.json();
+    return data.credits;
   } catch (error) {
-    console.error("Failed to fetch dashboard data:", error);
-    return {
-      credits: 0,
-      youtube: {
-        subscribers: 0,
-        views_today: 0,
-        estimated_revenue: 0,
-        engagement_rate: 0,
+    console.error('Error fetching credits:', error);
+    throw error;
+  }
+};
+
+export const getSurveyUrl = async (userId: string) => {
+  const response = await fetch(`${API_BASE_URL}/theorem/survey-url?userId=${userId}`, {
+    credentials: 'include'
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to get survey URL');
+  }
+  
+  return response.text();
+};
+
+export const fetchDashboardData = async (userId: string) => {
+  const response = await fetch(`${API_BASE_URL}/dashboard?userId=${userId}`, {
+    credentials: 'include',
+    headers: {
+      'Cache-Control': 'no-cache'
+    }
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to fetch dashboard data');
+  }
+  
+  return response.json();
+};
+
+export const getSession = async (request: Request) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/session`, {
+      headers: {
+        'Cookie': request.headers.get('Cookie') || ''
       },
-    };
-  }
-}
-
-export async function refreshYouTubeStats() {
-  try {
-    const response = await fetch("/api/dashboard/refresh", {
-      method: "POST",
-      credentials: "include",
+      credentials: 'include'
     });
-    return await response.json();
+    
+    if (!response.ok) return null;
+    
+    const sessionData = await response.json();
+    return sessionData.user || null;
   } catch (error) {
-    console.error("Failed to refresh stats:", error);
+    console.error('Session check failed:', error);
     return null;
   }
-}
+};
 
-export async function getSurveyUrl(userId: string) {
-  try {
-    const response = await fetch(`/api/surveys/url?userId=${userId}`, {
-      credentials: "include",
-    });
-    const data = await response.json();
-    return data.url;
-  } catch (error) {
-    console.error("Failed to get survey URL:", error);
-    return "https://survey.theoremreach.com/error";
+export const refreshStats = async () => {
+  const response = await fetch(`${API_BASE_URL}/dashboard/refresh`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to refresh stats');
   }
-}
+  
+  return response.json();
+};
 
-export async function getUserCredits(userId: string) {
-  try {
-    const response = await fetch(`/api/user/credits?userId=${userId}`, {
-      credentials: "include",
-    });
-    const data = await response.json();
-    return data.credits || 0;
-  } catch (error) {
-    console.error("Failed to get user credits:", error);
-    return 0;
+// Función para enviar mensajes al asistente IA
+export const sendAIMessage = async (userId: string, message: string) => {
+  const response = await fetch(`${API_BASE_URL}/ai/chat`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ userId, message })
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'AI service failed');
   }
-}
+  
+  return response.text();
+};
 
-export async function getSession() {
-  try {
-    const response = await fetch("/api/auth/session", {
-      credentials: "include",
-    });
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to get session:", error);
-    return null;
+// Función para obtener historial de transacciones
+export const getTransactionHistory = async (userId: string) => {
+  const response = await fetch(`${API_BASE_URL}/credits/history?userId=${userId}`, {
+    credentials: 'include'
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to fetch transaction history');
   }
-}
-
-export async function signOut() {
-  try {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-    return true;
-  } catch (error) {
-    console.error("Failed to sign out:", error);
-    return false;
-  }
-}
+  
+  return response.json();
+};
