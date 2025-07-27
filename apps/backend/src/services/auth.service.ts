@@ -17,6 +17,7 @@ export const getAuthUrl = () => {
       "https://www.googleapis.com/auth/youtube.readonly",
     ],
     prompt: "consent",
+    redirect_uri: `${config.SITE_URL}/api/auth/callback` 
   });
 };
 
