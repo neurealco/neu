@@ -4,7 +4,6 @@ import StatsCard from "../../components/dashboard/StatsCard.astro";
 import YouTubeStats from "../../components/dashboard/YouTubeStats.astro";
 import { fetchDashboardData, getSession, refreshStats } from "../../lib/api";
 
-// Importar configuración de API
 import { API_BASE_URL } from "../../lib/apiConfig";
 
 const session = await getSession(Astro.request);
