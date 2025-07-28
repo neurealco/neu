@@ -7,17 +7,22 @@ RUN npm install -g pnpm@10.13.1
 # Configurar directorio de trabajo
 WORKDIR /app
 
-# Copiar solo lo necesario para instalar dependencias
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+# 1. Copiar archivos de configuración de pnpm
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# 2. Crear estructura de directorios para el frontend
+RUN mkdir -p apps/frontend
+
+# 3. Copiar package.json del frontend
 COPY apps/frontend/package.json ./apps/frontend/package.json
 
-# Instalar dependencias (incluyendo devDependencies)
-RUN pnpm install --frozen-lockfile
+# 4. Instalar dependencias usando filtro de pnpm
+RUN pnpm install --frozen-lockfile --filter frontend
 
-# Copiar solo los archivos del frontend
+# 5. Copiar el resto del código del frontend
 COPY apps/frontend ./apps/frontend
 
-# Construir el frontend
+# 6. Construir el frontend
 RUN pnpm --filter frontend build
 
 # Etapa de producción final
@@ -25,10 +30,12 @@ FROM node:18-bookworm-slim
 
 WORKDIR /app
 
-# Copiar solo los archivos construidos y dependencias de producción
+# Copiar solo los archivos construidos
 COPY --from=builder /app/apps/frontend/dist ./dist
-COPY --from=builder /app/apps/frontend/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
+
+# Instalar solo dependencias de producción
+COPY apps/frontend/package.json .
+RUN npm install --omit=dev
 
 # Configurar variables de entorno
 ENV HOST=0.0.0.0
