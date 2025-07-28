@@ -1,8 +1,34 @@
-**/node_modules
-**/.git
-**/.vscode
-**/dist
-Dockerfile
-docker-compose.*
-*.md
-.env
+# Dependencias locales (serán reinstaladas en el contenedor)
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+
+# Salidas de compilación y artefactos temporales
+dist
+build
+coverage
+.temp
+.out
+
+# Archivos de entorno (nunca subas .env reales al build)
+.env*
+.envrc
+
+# Directorios de control de versiones
+.git
+.gitignore
+
+# Configuraciones y archivos del sistema/IDE
+*.swp
+*.swo
+*.swn
+*.bak
+.DS_Store
+.idea
+.vscode
+
+# Archivos de prueba
+**/__tests__/
+**/*.spec.*
+**/*.test.*
