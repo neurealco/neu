@@ -1,6 +1,4 @@
 ---
-import "../styles/main.css";
-import "../styles/footer.css";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 const { title } = Astro.props;
@@ -12,6 +10,10 @@ const { title } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title} - Neureal Features</title>
+    <!-- Enlaza los estilos desde /public/styles/ -->
+    <link rel="stylesheet" href="/styles/main.css" />
+    <link rel="stylesheet" href="/styles/footer.css" />
+    <link rel="stylesheet" href="/styles/documentation.css" />
   </head>
 
   <body>
