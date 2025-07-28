@@ -1,0 +1,150 @@
+/* Payment Container */
+.payment-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* Header Styles */
+.payment-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.payment-title {
+  font-size: 2.25rem;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.payment-subtitle {
+  color: #a0aec0;
+  font-size: 1.125rem;
+}
+
+/* Payment Methods Grid */
+.payment-methods {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.method-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.method-category {
+  color: #ffffff;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Card Brands Grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.card-brand {
+  padding: 1rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Wallet Styles */
+.wallet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.wallet-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.wallet-item svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Currencies Section */
+.currencies-section {
+  margin-bottom: 3rem;
+}
+
+.currencies-title {
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.currency-item {
+  padding: 0.75rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Security Badge */
+.security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #a0aec0;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+}
+
+.security-badge svg {
+  width: 32px;
+  height: 32px;
+  color: #00c853;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .payment-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .payment-title {
+    font-size: 1.75rem;
+  }
+
+  .method-card {
+    padding: 1.5rem;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .payment-methods {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
