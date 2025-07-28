@@ -22,10 +22,12 @@ RUN pnpm --filter backend run build
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Copia SOLO lo necesario para el backend
+# Copia los archivos necesarios
 COPY --from=builder /app/apps/backend/package.json ./package.json
 COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+
+# Instala dependencias de producción
+RUN npm install --omit=dev
 
 # Variables de entorno
 ENV NODE_ENV=production
