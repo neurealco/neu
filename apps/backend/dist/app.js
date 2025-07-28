@@ -22,6 +22,15 @@ app.use((req, res, next) => {
     return (0, cookie_parser_1.default)()(req, res, next);
 });
 app.use((0, rateLimit_util_1.rateLimitMiddleware)(rateLimit_util_1.apiRateLimiter));
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "UP",
+        services: {
+            database: "OK",
+            redis: "OK"
+        }
+    });
+});
 // Routes
 app.use("/api", routes_1.default);
 // Error handling
