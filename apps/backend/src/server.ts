@@ -8,8 +8,12 @@ const server = createServer(app);
 const start = async () => {
   await initCache();
   
-  server.listen(config.PORT, () => {
-    console.log(`🚀 Server running on port ${config.PORT}`);
+  // Solución 1: Convertir PORT a número
+  const port = Number(config.PORT) || 8000;
+  
+  // Solución 2: Escuchar sin especificar host
+  server.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
   });
 };
 
