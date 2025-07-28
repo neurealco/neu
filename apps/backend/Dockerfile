@@ -4,28 +4,31 @@ FROM node:18-bookworm AS deps
 RUN apt-get update && apt-get install -y python3 make g++ git
 WORKDIR /app
 
-# Copiar solo package.json y lockfile primero
-COPY package.json pnpm-lock.yaml ./
+# Copia archivos necesarios para pnpm y monorepo
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Instalar versión fija de pnpm compatible con lockfileVersion 9
+# Copia toda la carpeta apps (todas las apps, incluyendo backend y frontend)
+COPY apps ./apps
+
+# Instala pnpm con la versión que usas localmente
 RUN npm install -g pnpm@10.13.1
 
-# Instalar dependencias respetando lockfile
 RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Backend ----------
 FROM deps AS builder
-COPY . .
+WORKDIR /app
 
-# Diagnóstico y build
-RUN pwd && ls -la && ls -la apps/backend
 RUN apt-get update && apt-get install -y build-essential
+
 RUN pnpm --filter backend build
 
 # ---------- Etapa 3: Imagen Final ----------
 FROM node:18-alpine AS runner
 WORKDIR /app
+
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+
 EXPOSE 8000
 CMD ["node", "dist/server.js"]
