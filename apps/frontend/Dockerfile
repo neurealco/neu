@@ -1,39 +1,27 @@
-# ---------- Etapa 1: Dependencias ----------
-FROM node:18-bookworm AS deps
+# ---------- Etapa 1: Builder ----------
+FROM node:18-bookworm AS builder
 
 RUN apt-get update && apt-get install -y python3 make g++ git
 WORKDIR /app
 
-# Copia los archivos raíz del monorepo.
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copia todo el proyecto
+COPY . .
 
-# Copia TODA la carpeta apps (¡todas las apps! No solo frontend sino backend también si tienes).
-COPY apps ./apps
-
+# Instala pnpm
 RUN npm install -g pnpm@10.13.1
 
+# Instala dependencias y construye el frontend
 RUN pnpm install --frozen-lockfile
-
-# ---------- Etapa 2: Build Frontend ----------
-FROM deps AS builder
-WORKDIR /app
-
-# Instala dependencias específicas del frontend
-RUN cd apps/frontend && pnpm install
-
 RUN pnpm --filter frontend build
 
-# ---------- Etapa 3: Imagen Final ----------
-FROM node:18-alpine AS runner
+# ---------- Etapa 2: Imagen Final ----------
+FROM node:18-alpine
 WORKDIR /app
 
-# Copia los archivos necesarios
+# Copia solo lo necesario
+COPY --from=builder /app/apps/frontend/package.json ./
 COPY --from=builder /app/apps/frontend/dist ./dist
-
-ARG PUBLIC_API_BASE_URL
-ARG PUBLIC_SITE_URL
-ENV PUBLIC_API_BASE_URL=https://neureal.site/api
-ENV PUBLIC_SITE_URL=https://neureal.site
+COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 CMD ["node", "dist/server/entry.mjs"]
