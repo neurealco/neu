@@ -1,0 +1,55 @@
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.launch-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 60px; /* Más padding para mayor ancho */
+  font-family: "Inter", sans-serif; /* Fuente Inter */
+  font-weight: 700;
+  font-size: 1.8rem !important;
+  background-image: linear-gradient(135deg, #6600c6, #009980);
+  border-radius: 50px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  background-size: 200% auto;
+  overflow: hidden;
+  min-width: 300px; /* Ancho mínimo */
+  width: 100%;
+  max-width: 400px; /* Ancho máximo */
+  letter-spacing: -0.5px; /* Estilo Inter moderno */
+}
+
+.button-content {
+  display: inherit;
+  align-items: center;
+  gap: 15px;
+}
+
+.emoji {
+  width: 42px;
+  height: 42px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Responsive para móviles */
+@media (max-width: 480px) {
+  .launch-button {
+    padding: 20px 50px;
+    font-size: 1.4rem;
+    min-width: 280px;
+    max-width: 95%;
+  }
+
+  .emoji {
+    width: 28px;
+    height: 28px;
+  }
+}
