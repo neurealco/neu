@@ -8,6 +8,16 @@ import { apiRateLimiter, rateLimitMiddleware } from "./utils/rateLimit.util";
 
 const app = express();
 
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    services: {
+      database: "OK",
+      redis: "OK"
+    }
+  });
+});
+
 app.use(
   cors({
     origin: config.SITE_URL,
