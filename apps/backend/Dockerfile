@@ -27,8 +27,10 @@ RUN pnpm --filter backend build
 FROM node:18-alpine AS runner
 WORKDIR /app
 
+# Copiar los archivos necesarios
+COPY --from=builder /app/apps/backend/package.json ./  # AÑADIDO
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 8000
-CMD ["sh", "-c", "npm install && node dist/server.js"]
+CMD ["node", "dist/server.js"]  # MODIFICADO (elimina npm install)
