@@ -4,22 +4,17 @@ FROM node:18-bookworm AS deps
 RUN apt-get update && apt-get install -y python3 make g++ git
 WORKDIR /app
 
-# Copia archivos necesarios para pnpm y monorepo
+# Copia archivos de configuración del monorepo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-# Copia toda la carpeta apps (todas las apps, incluyendo backend y frontend)
 COPY apps ./apps
 
-# Instala pnpm con la versión que usas localmente
+# Instala pnpm
 RUN npm install -g pnpm@10.13.1
-
 RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Backend ----------
 FROM deps AS builder
 WORKDIR /app
-
-RUN apt-get update && apt-get install -y build-essential
 
 RUN pnpm --filter backend build
 
@@ -27,10 +22,14 @@ RUN pnpm --filter backend build
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Copiar los archivos necesarios
-COPY --from=builder /app/apps/backend/package.json ./  # AÑADIDO
+# Copia SOLO lo necesario para el backend
+COPY --from=builder /app/apps/backend/package.json ./  # ¡CRUCIAL!
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 
+# Variables de entorno (ajustar según Northflank)
+ENV NODE_ENV=production
+ENV PORT=8000
+
 EXPOSE 8000
-CMD ["node", "dist/server.js"]  # MODIFICADO (elimina npm install)
+CMD ["node", "dist/server.js"]  # Sin npm install
