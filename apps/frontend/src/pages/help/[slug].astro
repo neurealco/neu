@@ -1,6 +1,7 @@
 ---
 import HelpLayout from "../../layouts/HelpLayout.astro";
 import { helpArticles } from "../../data/helpContent.js";
+export const prerender = true;
 
 export async function getStaticPaths() {
   return Object.keys(helpArticles).map((slug) => ({

@@ -1,6 +1,7 @@
 ---
 import FeaturesLayout from "../../layouts/FeaturesLayout.astro";
 import { featureArticles } from "../../data/featuresContent.js";
+export const prerender = true;
 
 export async function getStaticPaths() {
   return Object.keys(featureArticles).map((slug) => ({
