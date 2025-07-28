@@ -9,9 +9,19 @@ const http_1 = require("http");
 const cache_util_1 = require("./utils/cache.util");
 const server = (0, http_1.createServer)(app_1.default);
 const start = async () => {
-    await (0, cache_util_1.initCache)();
-    server.listen(config_1.default.PORT, () => {
-        console.log(`🚀 Server running on port ${config_1.default.PORT}`);
-    });
+    try {
+        await (0, cache_util_1.initCache)();
+        console.log('✅ Redis connected');
+        const port = Number(config_1.default.PORT) || 8000;
+        // Escuchar en 0.0.0.0 para conexiones externas
+        server.listen(port, '0.0.0.0', () => {
+            console.log(`🚀 Server running on port ${port}`);
+            console.log(`🩺 Health check: http://0.0.0.0:${port}/health`);
+        });
+    }
+    catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
 };
 start();
