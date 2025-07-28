@@ -1,15 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 799 373">
-  <g clip-path="url(#a)">
-    <path fill="#DFDFDF" d="M0 0h61.7284v372.595H0z"/>
-    <path stroke="url(#b)" stroke-linecap="square" stroke-width="62" d="M767.889 341.69H92.8116V30.9047H767.889V341.69Z"/>
-  </g>
-  <defs>
-    <linearGradient id="b" x1="430.351" x2="430.351" y1="30.9047" y2="367.185" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D50000"/>
-      <stop offset="1" stop-color="#6F0000"/>
-    </linearGradient>
-    <clipPath id="a">
-      <path fill="#fff" d="M0 0h799v373H0z"/>
-    </clipPath>
-  </defs>
+<svg width="1080" height="1080" viewBox="0 0 1080 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.5" y="0.5" width="1079" height="1079" rx="199.5" fill="black"/>
+<rect x="0.5" y="0.5" width="1079" height="1079" rx="199.5" stroke="black"/>
+<path d="M98 260H218V820H98V260Z" fill="white"/>
+<path d="M877 700V820H198V700H877Z" fill="white"/>
+<path d="M982 740C982 784.183 946.183 820 902 820H862V260H902C946.183 260 982 295.817 982 340V740Z" fill="white"/>
+<path d="M198 380V260L877 260V380L198 380Z" fill="white"/>
 </svg>
