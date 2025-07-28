@@ -1,0 +1,33 @@
+version: '9.0'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SECRET=${SUPABASE_SECRET}
+      - THEOREM_API_KEY=${THEOREM_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - SITE_URL=http://localhost:3000
+    depends_on:
+      - redis
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PUBLIC_API_BASE_URL=http://backend:8000/api
+      - PUBLIC_SITE_URL=http://localhost:3000
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:alpine
