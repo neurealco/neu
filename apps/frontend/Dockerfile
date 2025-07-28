@@ -23,17 +23,15 @@ RUN pnpm --filter frontend build --reporter=append-only
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Copia los archivos necesarios
 COPY --from=builder /app/apps/frontend/package.json ./package.json
 COPY --from=builder /app/apps/frontend/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
 ARG PUBLIC_API_BASE_URL
 ARG PUBLIC_SITE_URL
 ENV PUBLIC_API_BASE_URL=https://neureal.site/api
 ENV PUBLIC_SITE_URL=https://neureal.site
-
-# Instala dependencias de producción
-RUN npm install --omit=dev
 
 EXPOSE 3000
 CMD ["node", "dist/server/entry.mjs"]
