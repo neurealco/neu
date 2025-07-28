@@ -1,9 +1,16 @@
 # ---------- Etapa 1: Dependencias ----------
 FROM node:18-bookworm AS deps
+
 RUN apt-get update && apt-get install -y python3 make g++ git
 WORKDIR /app
+
+# Copiar solo package.json y lockfile primero
 COPY package.json pnpm-lock.yaml ./
+
+# Instalar versión fija de pnpm compatible con lockfileVersion 9
 RUN npm install -g pnpm@7.18.1
+
+# Instalar dependencias respetando lockfile
 RUN pnpm install --frozen-lockfile
 
 # ---------- Etapa 2: Build Frontend ----------
