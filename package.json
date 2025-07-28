@@ -3,12 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
-    "build": "pnpm --filter backend build && pnpm --filter frontend build",
-    "docker:build": "docker-compose build",
-    "docker:up": "docker-compose up",
-    "docker:down": "docker-compose down",
-    "docker:prod": "docker-compose -f docker-compose.prod.yml up",
-    "deploy:akash": "bash deploy-akash.sh"
+    "build": "pnpm --filter backend build",
+    "start": "node apps/backend/dist/server.js",
+    "heroku-postbuild": "pnpm install --frozen-lockfile && pnpm build"
   },
   "engines": {
     "node": "18.20.8",
@@ -16,13 +13,13 @@
   },
   "packageManager": "pnpm@10.13.1",
   "devDependencies": {
-    "typescript": "^5.4.0",
     "@types/axios": "^0.14.4",
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
     "@types/express-validator": "^3.0.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/winston": "^2.4.4",
-    "concurrently": "^8.2.1"
+    "concurrently": "^8.2.1",
+    "typescript": "^5.4.0"
   }
 }
