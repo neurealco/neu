@@ -17,23 +17,23 @@ RUN pnpm install --frozen-lockfile
 # ---------- Etapa 2: Build Frontend ----------
 FROM deps AS builder
 WORKDIR /app
-RUN pnpm --filter frontend build --reporter=append-only
+
+# Instala dependencias específicas del frontend
+RUN cd apps/frontend && pnpm install
+
+RUN pnpm --filter frontend build
 
 # ---------- Etapa 3: Imagen Final ----------
 FROM node:18-alpine AS runner
 WORKDIR /app
 
 # Copia los archivos necesarios
-COPY --from=builder /app/apps/frontend/package.json ./package.json
 COPY --from=builder /app/apps/frontend/dist ./dist
 
 ARG PUBLIC_API_BASE_URL
 ARG PUBLIC_SITE_URL
 ENV PUBLIC_API_BASE_URL=https://neureal.site/api
 ENV PUBLIC_SITE_URL=https://neureal.site
-
-# Instala dependencias de producción
-RUN npm install --omit=dev
 
 EXPOSE 3000
 CMD ["node", "dist/server/entry.mjs"]
