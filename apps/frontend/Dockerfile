@@ -36,4 +36,4 @@ ENV PUBLIC_SITE_URL=https://neureal.site
 RUN npm install --omit=dev
 
 EXPOSE 3000
-CMD ["node", "dist/server/entry.mjs"]
+CMD ["sh", "-c", "npm install && node dist/server/entry.mjs"]
