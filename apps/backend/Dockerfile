@@ -20,7 +20,7 @@ COPY . .
 # Diagnóstico y build
 RUN pwd && ls -la && ls -la apps/backend
 RUN apt-get update && apt-get install -y build-essential
-RUN pnpm --filter backend build --reporter=append-only
+RUN pnpm --filter backend build
 
 # ---------- Etapa 3: Imagen Final ----------
 FROM node:18-alpine AS runner
