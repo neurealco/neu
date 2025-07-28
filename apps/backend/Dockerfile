@@ -15,17 +15,15 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS builder
 WORKDIR /app
 
-# Instala dependencias específicas del backend
-RUN cd apps/backend && pnpm install
-
-RUN pnpm --filter backend build
+# Construye específicamente el backend
+RUN pnpm --filter backend run build
 
 # ---------- Etapa 3: Imagen Final ----------
 FROM node:18-alpine AS runner
 WORKDIR /app
 
 # Copia SOLO lo necesario para el backend
-COPY --from=builder /app/apps/backend/package.json ./  # Corregido
+COPY --from=builder /app/apps/backend/package.json ./package.json
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 
