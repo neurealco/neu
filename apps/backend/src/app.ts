@@ -8,16 +8,6 @@ import { apiRateLimiter, rateLimitMiddleware } from "./utils/rateLimit.util";
 
 const app = express();
 
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "UP",
-    services: {
-      database: "OK",
-      redis: "OK"
-    }
-  });
-});
-
 app.use(
   cors({
     origin: config.SITE_URL,
@@ -33,6 +23,14 @@ app.use(
     return cookieParser()(req as any, res as any, next as any);
   }
 );
+
+// Agrega esto después de app.use(cookieParser());
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "UP",
+    timestamp: new Date().toISOString()
+  });
+});
 
 app.use(rateLimitMiddleware(apiRateLimiter));
 
