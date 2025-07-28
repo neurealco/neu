@@ -1,0 +1,142 @@
+/* styles/privacy.css - Versión Dark Mode Consolidada */
+.privacy-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  color: #e2e8f0;
+  line-height: 1.6;
+  background: var(--color-base); /* #0a0a0a */
+}
+
+.privacy-content {
+  background: #171717;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+}
+
+.privacy-title {
+  font-size: 2.5rem;
+  color: #ebf8ff;
+  margin-bottom: 0.5rem;
+}
+
+.privacy-effective-date {
+  color: #94a3b8;
+  margin-bottom: 2rem;
+}
+
+.privacy-section {
+  margin-bottom: 3rem;
+}
+
+.privacy-section-title {
+  color: #7dd3fc;
+  font-size: 1.5rem;
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #334155;
+}
+
+.privacy-subtitle {
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.privacy-list {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.privacy-list li {
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.privacy-list li::before {
+  content: "•";
+  color: #7dd3fc;
+  position: absolute;
+  left: -1.2rem;
+  top: 0.1rem;
+}
+
+.privacy-nav {
+  background: #1e293b;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+  border: 1px solid #334155;
+}
+
+.privacy-nav-title {
+  color: #7dd3fc;
+  margin-bottom: 1rem;
+}
+
+.privacy-nav-list-full {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.privacy-nav-list-full a {
+  color: #38bdf8;
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  display: flex;
+  align-items: center;
+}
+
+.privacy-nav-list-full a:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+}
+
+.privacy-nav-list-full a::before {
+  content: "•";
+  margin-right: 0.75rem;
+  font-weight: bold;
+}
+
+.privacy-back-top-link {
+  color: #38bdf8;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  display: inline-block;
+  transition: opacity 0.2s;
+}
+
+.privacy-back-top-link:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .privacy-container {
+    padding: 1rem;
+  }
+
+  .privacy-content {
+    padding: 1.5rem;
+  }
+
+  .privacy-title {
+    font-size: 2rem;
+  }
+
+  .privacy-nav-list-full {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .privacy-nav-list-full {
+    grid-template-columns: 1fr;
+  }
+}

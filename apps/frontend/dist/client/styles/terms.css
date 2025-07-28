@@ -1,0 +1,87 @@
+/* terms-conditions.css */
+.terms-container {
+  max-width: 800px;
+  margin: 4rem auto;
+  padding: 2.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  line-height: 1.7;
+}
+
+.terms-container .terms-title {
+  font-size: 2.2rem;
+  text-align: left;
+  margin-bottom: 3rem;
+  color: #f8fafc;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terms-container .section {
+  margin-bottom: 2.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.terms-container .section-title {
+  font-size: 1.4rem;
+  color: #f8fafc;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.terms-container .notice {
+  background: rgba(0, 70, 209, 0.1);
+  padding: 1rem;
+  border-left: 4px solid #0046d1;
+  border-radius: 4px;
+  margin: 1.5rem 0;
+}
+
+.terms-container ul {
+  list-style: none;
+  padding-left: 0;
+  text-align: left;
+}
+
+.terms-container ul li {
+  margin-bottom: 0.8rem;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.terms-container ul li::before {
+  content: "-";
+  color: #ffffff;
+  position: absolute;
+  left: 0;
+}
+
+.terms-container a {
+  color: #4d8eff;
+  text-decoration: none;
+}
+
+.terms-container a:hover {
+  color: #0046d1;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .terms-container {
+    margin: 2rem 1rem;
+    padding: 1.5rem;
+  }
+
+  .terms-container .terms-title {
+    font-size: 1.8rem;
+  }
+
+  .terms-container .section {
+    padding: 1rem;
+  }
+}
