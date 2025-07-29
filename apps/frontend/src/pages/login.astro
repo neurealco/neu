@@ -5,22 +5,34 @@ export const prerender = true;
 ---
 
 <Layout title="Login to Neureal">
-  <section class="login-section">
-    <div class="container">
-      <div class="login-card">
-        <h2>Login to Neureal</h2>
-        <p>Connect with your Google account to get started</p>
-
+  <section class="login-container">
+    <div class="login-left">
+      <div class="login-content">
+        <div class="logo-container">
+          <img src="/assets/images/logo.png" alt="Neureal Logo" class="logo" />
+        </div>
+        <h1>Welcome back</h1>
+        <p>Sign in to access your Neureal dashboard</p>
+        
         <div class="login-methods">
           <GoogleLoginButton />
         </div>
 
         <div class="login-footer">
           <p>
-            By continuing, you agree to our <a href="#">Terms of Service</a> and
-            <a href="#">Privacy Policy</a>
+            By continuing, you agree to our <a href="/terms-and-conditions">Terms</a> and
+            <a href="/privacy">Privacy Policy</a>
           </p>
         </div>
+      </div>
+    </div>
+    
+    <div class="login-right">
+      <div class="geometric-pattern"></div>
+      <div class="floating-squares">
+        <div class="square sq-1"></div>
+        <div class="square sq-2"></div>
+        <div class="square sq-3"></div>
       </div>
     </div>
   </section>
