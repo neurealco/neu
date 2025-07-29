@@ -12,5 +12,6 @@ router.get("/login", startAuth);
 router.get("/callback", authCallback);
 router.get("/session", getSession);
 router.post("/logout", logout);
+router.get("/google", startAuth);
 
 export const authRoutes = router;
