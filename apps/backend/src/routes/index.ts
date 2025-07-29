@@ -6,7 +6,7 @@ import theoremRoutes from "./theorem.routes";
 
 const router = Router();
 
-router.use("/auth", authRoutes);
+router.use("/api/auth", authRoutes);
 router.use("/credits", creditsRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/theorem", theoremRoutes);
