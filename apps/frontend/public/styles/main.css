@@ -64,22 +64,6 @@ img {
   user-drag: none; /* stylelint-disable-next-line property-no-unknown */
 }
 
-header {
-  display: flex;
-  align-items: center;
-  padding-left: 15px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  background: rgba(0, 0, 0, 0.95) !important;
-  backdrop-filter: blur(12px);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.05);
-  position: relative;
-  z-index: 1000;
-}
-
 .logo {
   width: 100px; /* Tamaño más grande */
   height: auto;
