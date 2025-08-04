@@ -30,6 +30,9 @@ app.get("/health", (req, res) => {
 });
 app.use((0, rateLimit_util_1.rateLimitMiddleware)(rateLimit_util_1.apiRateLimiter));
 // Routes
+app.get("/api/test", (req, res) => {
+    res.json({ status: "Backend working", time: new Date() });
+});
 app.use("/api", routes_1.default);
 // Error handling
 app.use(error_middleware_1.errorHandler);
