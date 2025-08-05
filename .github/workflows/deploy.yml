@@ -1,0 +1,30 @@
+name: Deploy to Oracle Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to OCIR
+        run: |
+          echo "${{ secrets.OCIR_PASSWORD }}" | docker login ${{ secrets.OCIR_REGION }}.ocir.io -u '${{ secrets.OCIR_USERNAME }}' --password-stdin
+
+      - name: Build & Push Frontend
+        run: |
+          docker build -t ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/frontend:latest -f apps/frontend/Dockerfile .
+          docker push ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/frontend:latest
+
+      - name: Build & Push Backend
+        run: |
+          docker build -t ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/backend:latest -f apps/backend/Dockerfile .
+          docker push ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/backend:latest
