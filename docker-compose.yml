@@ -1,31 +1,36 @@
 version: '3.8'
 
 services:
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - frontend
-      - backend
-
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    environment:
-      - PUBLIC_API_BASE_URL=http://neureal.site/api
     ports:
       - "3000:3000"
+    environment:
+      PUBLIC_API_BASE_URL: https://neureal.site/api
+      PUBLIC_SITE_URL: https://neureal.site
 
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    environment:
-      - SITE_URL=http://neureal.site
-      
     ports:
       - "8000:8000"
+    environment:
+      SITE_URL: https://neureal.site
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SECRET: ${SUPABASE_SECRET}
+      # ... otras variables
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - frontend
+      - backend
