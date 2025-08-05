@@ -1,29 +1,31 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - backend
+
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
+    environment:
+      - PUBLIC_API_BASE_URL=http://neureal.site/api
     ports:
       - "3000:3000"
-    depends_on:
-      - backend
-    environment:
-      PUBLIC_API_BASE_URL: http://backend:8000
 
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+    environment:
+      - SITE_URL=http://neureal.site
+      
     ports:
       - "8000:8000"
-    depends_on:
-      - redis
-    environment:
-      REDIS_URL: redis://redis:6379
-
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
