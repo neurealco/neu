@@ -8,45 +8,61 @@ services:
     environment:
       - PUBLIC_API_BASE_URL=https://neureal.site/api
       - PUBLIC_SITE_URL=https://neureal.site
-    restart: unless-stopped
     networks:
       - neureal-net
+    restart: unless-stopped
 
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    environment:
-      - SITE_URL=https://neureal.site
-      - PORT=8000
-      - REDIS_URL=redis://redis:6379
-    restart: unless-stopped
-    depends_on:
-      - redis
+    env_file: 
+      - apps/backend/.env
     networks:
       - neureal-net
+    depends_on:
+      - redis
+    restart: unless-stopped
 
   redis:
     image: redis:alpine
     command: redis-server --save 60 1 --loglevel warning
-    restart: unless-stopped
+    volumes:
+      - redis-data:/data
     networks:
       - neureal-net
+    restart: unless-stopped
 
   nginx:
     image: nginx:alpine
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/mime.types:/etc/nginx/mime.types
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - frontend
       - backend
-    restart: unless-stopped
     networks:
       - neureal-net
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - neureal-net
+    restart: unless-stopped
 
 networks:
   neureal-net:
     driver: bridge
+
+volumes:
+  redis-data:

@@ -4,7 +4,7 @@ import node from "@astrojs/node"; // Importante para SSR
 
 export default defineConfig({
   integrations: [react()],
-  output: "server", // Habilitar SSR
+  output: "server",
   adapter: node({
     mode: "standalone",
   }),
