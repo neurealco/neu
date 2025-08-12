@@ -22,8 +22,6 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -t rsa,ed25519,ecdsa ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-          echo "👉 Known hosts:"
-          cat ~/.ssh/known_hosts
           
       - name: Verify SSH connection
         run: |
@@ -31,6 +29,38 @@ jobs:
               -o ConnectTimeout=10 \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
               "echo '✅ SSH connection successful!'"
+              
+      # PASO CRÍTICO: Preparar el entorno ANTES del despliegue
+      - name: Ensure .env exists
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENV_EOF'
+          set -e
+          cd /opt/neureal/apps/backend
+          
+          # Crear .env si no existe
+          if [ ! -f .env ]; then
+            echo "⚠️ .env file missing, creating new one..."
+            touch .env
+            echo "# Auto-generated .env file" >> .env
+            echo "APP_ENV=production" >> .env
+            
+            # Si existe .env.example, copiar su contenido
+            if [ -f .env.example ]; then
+              echo "📋 Copying from .env.example..."
+              cat .env.example >> .env
+            fi
+            
+            # Agregar configuraciones esenciales
+            echo "LOG_LEVEL=info" >> .env
+            echo "✅ Created new .env file"
+          else
+            echo "🔑 .env file already exists"
+          fi
+          
+          # Crear backup permanente
+          cp .env .env.backup
+          ENV_EOF
               
       - name: Deploy application
         run: |
@@ -40,48 +70,30 @@ jobs:
           set -e
           set -x
           
-          echo "👉 Current directory: $(pwd)"
-          echo "👉 Moving to project directory..."
           cd /opt/neureal
           
-          echo "👉 Updating from GitHub..."
+          # Actualizar código
           git fetch origin
           git reset --hard origin/main
           
-          # NO USAR git clean -fd (preserva archivos no rastreados como .env)
+          # Restaurar .env desde backup si fue eliminado
+          if [ ! -f apps/backend/.env ]; then
+            echo "🔙 Restoring .env from backup..."
+            cp apps/backend/.env.backup apps/backend/.env
+          fi
           
-          echo "👉 Git status:"
-          git status --short
-          echo "👉 Latest commit:"
-          git log -1 --oneline
-          
-          echo "👉 Rebuilding containers..."
+          # Reconstruir contenedores
           docker-compose build --no-cache --pull frontend backend
           
-          echo "👉 Restarting services..."
+          # Reiniciar servicios
           docker-compose up -d --force-recreate --no-deps frontend backend
           
-          echo "👉 Reloading Nginx..."
+          # Recargar Nginx
           docker-compose exec -T nginx nginx -t
           docker-compose exec -T nginx nginx -s reload
           
           echo "🚀 Deployment successful!"
           EOF
-          
-      # PASO CRÍTICO: Restaurar el archivo .env
-      - name: Restore .env file
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd /opt/neureal/apps/backend
-            if [ ! -f .env ]; then
-              echo '⚠️ .env file missing, restoring from backup...'
-              cp .env.example .env || echo 'Using default .env'
-              # Agregar aquí cualquier configuración necesaria
-              echo 'APP_ENV=production' >> .env
-              echo '✅ .env file restored'
-            fi
-          "
           
       - name: Run health check
         run: |
