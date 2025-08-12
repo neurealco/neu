@@ -36,6 +36,11 @@ jobs:
             docker-compose up -d --force-recreate --no-deps frontend backend
             docker-compose exec -T nginx nginx -t && docker-compose exec -T nginx nginx -s reload
           "
+      - name: Copy .env to server
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /opt/neureal/apps/backend"
+          scp apps/backend/.env ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/neureal/apps/backend/.env
+
           
       - name: Deployment status
         uses: rtCamp/action-slack-notify@v2
