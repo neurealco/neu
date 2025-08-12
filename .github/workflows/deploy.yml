@@ -63,41 +63,37 @@ jobs:
           ENV_EOF
               
       - name: Deploy application
-  run: |
-    ssh -o StrictHostKeyChecking=accept-new \
-        ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-    set -e
-    set -x
-    
-    cd /opt/neureal
-    
-    # Actualizar código
-    git fetch origin
-    git reset --hard origin/main
-    
-    # Restaurar .env si fue eliminado
-    if [ ! -f apps/backend/.env ]; then
-      echo "🔙 Restoring .env from backup..."
-      cp apps/backend/.env.backup apps/backend/.env
-    fi
-    
-    # Reconstruir contenedores
-    docker-compose build --no-cache --pull frontend backend
-    
-    # Reiniciar servicios con orden controlado
-    docker-compose up -d --force-recreate --no-deps backend frontend
-    
-    # Esperar que los servicios estén estables
-    echo "⏳ Waiting for services to stabilize..."
-    sleep 15
-    
-    # Recargar Nginx
-    echo "🔁 Reloading Nginx..."
-    docker-compose exec -T nginx nginx -t
-    docker-compose exec -T nginx nginx -s reload
-    
-    echo "🚀 Deployment successful!"
-    EOF
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              -o ConnectTimeout=20 \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          set -e
+          set -x
+          
+          cd /opt/neureal
+          
+          # Actualizar código
+          git fetch origin
+          git reset --hard origin/main
+          
+          # Restaurar .env desde backup si fue eliminado
+          if [ ! -f apps/backend/.env ]; then
+            echo "🔙 Restoring .env from backup..."
+            cp apps/backend/.env.backup apps/backend/.env
+          fi
+          
+          # Reconstruir contenedores
+          docker-compose build --no-cache --pull frontend backend
+          
+          # Reiniciar servicios
+          docker-compose up -d --force-recreate --no-deps frontend backend
+          
+          # Recargar Nginx
+          docker-compose exec -T nginx nginx -t
+          docker-compose exec -T nginx nginx -s reload
+          
+          echo "🚀 Deployment successful!"
+          EOF
           
       - name: Run health check
         run: |
@@ -113,7 +109,7 @@ jobs:
           done
           echo "❌ Health check failed after 5 attempts"
           exit 1
-          
+
       - name: Performance test
         if: success()
         uses: treosh/lighthouse-ci-action@v11
