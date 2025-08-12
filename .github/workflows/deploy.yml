@@ -1,30 +1,80 @@
-name: Deploy to Oracle Cloud Run
+name: Production Deployment
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'nginx/**'
+      - 'docker-compose.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Login to OCIR
+      - name: Add known hosts
         run: |
-          echo "${{ secrets.OCIR_PASSWORD }}" | docker login ${{ secrets.OCIR_REGION }}.ocir.io -u '${{ secrets.OCIR_USERNAME }}' --password-stdin
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
-      - name: Build & Push Frontend
+      - name: Deploy and update
         run: |
-          docker build -t ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/frontend:latest -f apps/frontend/Dockerfile .
-          docker push ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/frontend:latest
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /opt/neureal
+            git pull origin main
+            docker-compose build --no-cache frontend backend
+            docker-compose up -d --force-recreate --no-deps frontend backend
+            docker-compose exec -T nginx nginx -t && docker-compose exec -T nginx nginx -s reload
+          "
+          
+      - name: Deployment status
+        uses: rtCamp/action-slack-notify@v2
+        if: always()
+        env:
+          SLACK_CHANNEL: deployments
+          SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
+          SLACK_ICON_EMOJI: rocket
+          SLACK_MESSAGE: "Deployment ${{ job.status }} to production"
+          SLACK_TITLE: "Neureal CI/CD"
+          SLACK_USERNAME: GitHub Actions Bot
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Health check
+        run: |
+          for i in 1 2 3; do
+          status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
+          if [ "$status" == "200" ]; then
+            echo "Health check passed."
+            exit 0
+          else
+            echo "Attempt $i: Health check failed with status $status."
+            sleep 5
+          fi
+          done
+          echo "::error::Health check failed after 3 attempts."
+          exit 1
 
-      - name: Build & Push Backend
+      - name: Performance metrics
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            https://neureal.site
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+      - name: Rollback on failure
+        if: failure()
         run: |
-          docker build -t ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/backend:latest -f apps/backend/Dockerfile .
-          docker push ${{ secrets.OCIR_REGION }}.ocir.io/${{ secrets.OCIR_NAMESPACE }}/backend:latest
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          cd /opt/neureal
+          git reset --hard HEAD@{1}
+          docker-compose up -d --force-recreate
+        "
