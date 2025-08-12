@@ -14,4 +14,5 @@ router.get("/session", getSession);
 router.post("/logout", logout);
 router.get("/google", startAuth);
 
+// Exportar como objeto nombrado
 export const authRoutes = router;

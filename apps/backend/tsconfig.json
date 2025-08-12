@@ -1,22 +1,23 @@
 {
-    "compilerOptions": {
-      "target": "ES2020",
-      "module": "NodeNext",
-      "moduleResolution": "NodeNext",
-      "outDir": "dist",
-      "esModuleInterop": true,
-      "strict": true,
-      "skipLibCheck": true,
-      "incremental": true,
-      "tsBuildInfoFile": "./dist/.tsbuildinfo",
-      "noErrorTruncation": true
-    },
-    "include": ["src/**/*"],
-    "exclude": [
-      "node_modules",
-      "dist",
-      "**/*.test.ts",
-      "**/*.spec.ts",
-      "**/*.d.ts"
-    ]
-  }
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "noErrorTruncation": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["node", "express"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

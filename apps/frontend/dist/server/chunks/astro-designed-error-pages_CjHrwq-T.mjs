@@ -233,7 +233,7 @@ function unflatten(parsed, revivers) {
 const ACTION_QUERY_PARAMS = {
   actionName: "_astroAction"};
 
-const __vite_import_meta_env__ = {"ASSETS_PREFIX": undefined, "BASE_URL": "/", "DEV": false, "MODE": "production", "PROD": true, "PUBLIC_DARKER_COLOR": "", "PUBLIC_PRIMARY_COLOR": "", "PUBLIC_SECONDARY_COLOR": "", "PUBLIC_SITE_URL": "https://neureal.site", "PUBLIC_SUPABASE_ANON_KEY": "your_supabase_anon_key", "PUBLIC_SUPABASE_URL": "your_supabase_url", "SITE": undefined, "SSR": true};
+const __vite_import_meta_env__ = {"ASSETS_PREFIX": undefined, "BASE_URL": "/", "DEV": false, "MODE": "production", "PROD": true, "SITE": undefined, "SSR": true};
 const codeToStatusMap = {
   // Implemented from tRPC error code table
   // https://trpc.io/docs/server/error-handling#error-codes

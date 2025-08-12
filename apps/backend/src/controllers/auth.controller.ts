@@ -43,6 +43,7 @@ export const authCallback = async (req: Request, res: Response) => {
 };
 
 export const getSession = (req: Request, res: Response) => {
+  // req.user ahora es reconocido por TypeScript
   if (!req.user) return res.status(200).json({ isAuthenticated: false });
 
   res.json({

@@ -4,12 +4,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getBasicStats = exports.getRealTimeStats = void 0;
-// apps/backend/src/services/youtube.service.ts
 const googleapis_1 = require("googleapis");
 const config_1 = __importDefault(require("../config"));
 const supabase_service_1 = require("./supabase.service");
-const credits_service_1 = require("./credits.service");
 const cache_util_1 = require("../utils/cache.util");
+const usage_service_1 = require("./usage.service");
 const error_middleware_1 = require("../middleware/error.middleware");
 // Configuración de OAuth2
 const oauth2Client = new googleapis_1.google.auth.OAuth2(config_1.default.GOOGLE_CLIENT_ID, config_1.default.GOOGLE_CLIENT_SECRET);
@@ -54,17 +53,15 @@ const getRealTimeStats = async (userId, forceRefresh = false) => {
     }
     // 3. Refrescar token si es necesario
     const accessToken = await refreshTokenIfNeeded(userId, token);
-    // 4. Solo deducir créditos si es refresco forzado
+    // 4. Si es un refresco forzado, verificar y aumentar el uso
     if (forceRefresh) {
-        try {
-            await (0, credits_service_1.deductCredits)(userId, 50, 'Force refresh YouTube stats');
+        // Verificar límite de uso
+        const { currentUsage, limit } = await (0, usage_service_1.checkUsage)(userId, 'youtube_refresh');
+        if (currentUsage >= limit) {
+            throw new error_middleware_1.UsageLimitExceededError('youtube_refresh', limit, currentUsage);
         }
-        catch (error) {
-            if (error instanceof error_middleware_1.InsufficientCreditsError) {
-                throw error;
-            }
-            throw new Error('Failed to deduct credits');
-        }
+        // Incrementar el contador de uso
+        await (0, usage_service_1.incrementUsage)(userId, 'youtube_refresh');
     }
     // 5. Obtener datos del canal
     const youtube = googleapis_1.google.youtube('v3');

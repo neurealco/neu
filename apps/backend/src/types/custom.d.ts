@@ -15,11 +15,26 @@ declare global {
     views: string;
     videos: string;
   }
-}
 
-export interface TheoremReachWebhook {
-  user_id: string;
-  amount: number;
-  survey_id: string;
-  status: "completed" | "terminated";
+  interface YouTubeStats {
+    channelId: string;
+    channelTitle: string;
+    thumbnail: string;
+    subscribers: string;
+    views: string;
+    videos: string;
+    dailyStats: Array<{
+      date: string;
+      views: string;
+      minutesWatched: string;
+      newSubscribers: string;
+    }>;
+  }
+
+  interface SubscriptionDetails {
+    plan: string;
+    update_url?: string;
+    cancel_url?: string;
+    next_payment_date?: string;
+  }
 }

@@ -1,6 +1,7 @@
 ---
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
-import { getUserCredits } from "../../lib/api";
+import { getUserCredits, getTransactionHistory } from "../../lib/api";
+import { getSession } from "../../lib/auth";
 
 const session = await getSession(Astro.request);
 if (!session) {
@@ -8,6 +9,7 @@ if (!session) {
 }
 
 const credits = await getUserCredits(session.user.id);
+const transactions = await getTransactionHistory(session.user.id);
 ---
 
 <DashboardLayout title="Credits Balance">
@@ -20,7 +22,6 @@ const credits = await getUserCredits(session.user.id);
       </p>
 
       <div class="balance-actions">
-        <a href="/dashboard/surveys" class="btn">Earn More Credits</a>
         <a href="/pricing" class="btn btn-outline">Upgrade Plan</a>
       </div>
     </div>
@@ -28,27 +29,19 @@ const credits = await getUserCredits(session.user.id);
     <div class="transactions">
       <h2>Recent Transactions</h2>
       <div class="transaction-list">
-        <div class="transaction-item">
-          <div class="transaction-info">
-            <div class="transaction-title">Survey Completion</div>
-            <div class="transaction-date">Today, 14:32</div>
+        {transactions.map(transaction => (
+          <div class="transaction-item">
+            <div class="transaction-info">
+              <div class="transaction-title">{transaction.reason}</div>
+              <div class="transaction-date">
+                {new Date(transaction.created_at).toLocaleDateString()}
+              </div>
+            </div>
+            <div class={`transaction-amount ${transaction.amount > 0 ? 'positive' : 'negative'}`}>
+              {transaction.amount > 0 ? '+' : ''}{transaction.amount}
+            </div>
           </div>
-          <div class="transaction-amount positive">+1000</div>
-        </div>
-        <div class="transaction-item">
-          <div class="transaction-info">
-            <div class="transaction-title">Stats Refresh</div>
-            <div class="transaction-date">Yesterday, 09:15</div>
-          </div>
-          <div class="transaction-amount negative">-50</div>
-        </div>
-        <div class="transaction-item">
-          <div class="transaction-info">
-            <div class="transaction-title">YouTube Analysis</div>
-            <div class="transaction-date">Jan 12, 2023</div>
-          </div>
-          <div class="transaction-amount negative">-100</div>
-        </div>
+        ))}
       </div>
     </div>
   </div>

@@ -8,18 +8,19 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  // Log del error
+  // Log error details
   logger.error(`${err.status || 500} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`);
   
-  // Manejar errores específicos
+  // Handle specific error types
   if (err.name === 'UnauthorizedError') {
     return res.status(401).json({ error: 'Invalid token' });
   }
   
-  if (err.name === 'InsufficientCreditsError') {
-    return res.status(402).json({ 
-      error: 'Insufficient credits',
-      required: err.required,
+  if (err.name === 'UsageLimitExceededError') {
+    return res.status(429).json({ 
+      error: 'Monthly usage limit exceeded',
+      feature: err.feature,
+      limit: err.limit,
       current: err.current
     });
   }
@@ -31,16 +32,20 @@ export const errorHandler = (
     });
   }
   
-  // Error genérico
+  // Generic error handling
   const status = err.status || 500;
   const message = err.message || 'Internal Server Error';
   
   res.status(status).json({ error: message });
 };
 
-export class InsufficientCreditsError extends Error {
-  constructor(public required: number, public current: number) {
-    super(`Insufficient credits. Required: ${required}, Current: ${current}`);
-    this.name = 'InsufficientCreditsError';
+export class UsageLimitExceededError extends Error {
+  constructor(
+    public feature: string,
+    public limit: number,
+    public current: number
+  ) {
+    super(`Usage limit exceeded for feature: ${feature}`);
+    this.name = 'UsageLimitExceededError';
   }
 }

@@ -12,4 +12,5 @@ router.use(authenticate);
 router.get("/", getDashboardData);
 router.post("/refresh", refreshStats);
 
-export default router;
+// Exportar como objeto nombrado
+export const dashboardRoutes = router;

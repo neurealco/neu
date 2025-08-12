@@ -31,7 +31,7 @@ const handleCallback = async (code) => {
             auth: oauth2Client,
         });
         const { data } = await oauth2.userinfo.get();
-        // Registrar/actualizar usuario en Supabase usando la API admin
+        // Registrar/actualizar usuario en Supabase
         const { data: userData, error } = await supabase_service_1.supabase.auth.admin.createUser({
             email: data.email,
             email_confirm: true,
@@ -46,12 +46,16 @@ const handleCallback = async (code) => {
         }
         const user = userData.user;
         // Guardar tokens de YouTube
-        await supabase_service_1.supabase.from("user_tokens").upsert({
+        await supabase_service_1.supabase.from("youtube_tokens").upsert({
             user_id: user.id,
-            youtube_access_token: tokens.access_token,
-            youtube_refresh_token: tokens.refresh_token,
-            youtube_expiry: tokens.expiry_date,
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            expiry_date: tokens.expiry_date,
         });
+        // Establecer el plan free (persistente)
+        await supabase_service_1.supabase.from('profiles').update({
+            subscription_plan: 'free',
+        }).eq('id', user.id);
         return user;
     }
     catch (error) {

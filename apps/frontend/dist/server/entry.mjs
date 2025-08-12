@@ -1,6 +1,6 @@
 import { renderers } from './renderers.mjs';
-import { c as createExports, s as serverEntrypointModule } from './chunks/_@astrojs-ssr-adapter_Up0aijen.mjs';
-import { manifest } from './manifest_Ba_VuXMk.mjs';
+import { c as createExports, s as serverEntrypointModule } from './chunks/_@astrojs-ssr-adapter_BbC40ioq.mjs';
+import { manifest } from './manifest_CToAj9tk.mjs';
 
 const _page0 = () => import('./pages/_image.astro.mjs');
 const _page1 = () => import('./pages/dashboard/ai-assistant.astro.mjs');

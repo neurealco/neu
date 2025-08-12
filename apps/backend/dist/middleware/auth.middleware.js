@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.premiumRequired = exports.authenticate = void 0;
+exports.authenticate = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = __importDefault(require("../config"));
 const supabase_service_1 = require("../services/supabase.service");
@@ -17,6 +17,7 @@ const authenticate = async (req, res, next) => {
         if (error || !data.user) {
             return res.status(401).json({ error: 'Invalid token' });
         }
+        // Asignar usuario a req.user (TypeScript ahora lo reconoce)
         req.user = data.user;
         next();
     }
@@ -25,13 +26,3 @@ const authenticate = async (req, res, next) => {
     }
 };
 exports.authenticate = authenticate;
-const premiumRequired = (req, res, next) => {
-    if (!req.user || req.user.role !== 'premium') {
-        return res.status(403).json({
-            error: "Premium subscription required",
-            upgradeUrl: "/dashboard/upgrade"
-        });
-    }
-    next();
-};
-exports.premiumRequired = premiumRequired;

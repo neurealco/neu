@@ -1,23 +1,16 @@
 import { c as createComponent, a as createAstro, m as maybeRenderHead, b as addAttribute, r as renderTemplate, e as renderHead, d as renderComponent, f as renderSlot } from './astro/server_LK4p-fTz.mjs';
-import { createClient } from '@supabase/supabase-js';
 /* empty css                                */
 
-const supabaseUrl = "your_supabase_url";
-const supabaseKey = "your_supabase_anon_key";
-createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  }
-});
+{
+  throw new Error("Missing Supabase environment variables");
+}
 
 async function getSession$1(request) {
   const cookie = request.headers.get("cookie");
   if (!cookie) return null;
   try {
     const sessionResponse = await fetch(
-      `${"https://neureal.site"}/api/auth/session`,
+      `${undefined                               }/api/auth/session`,
       {
         headers: { cookie }
       }

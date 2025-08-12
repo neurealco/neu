@@ -16,19 +16,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ error: 'Invalid token' });
     }
 
+    // Asignar usuario a req.user (TypeScript ahora lo reconoce)
     req.user = data.user;
     next();
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
   }
-};
-
-export const premiumRequired = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.user || req.user.role !== 'premium') {
-    return res.status(403).json({
-      error: "Premium subscription required",
-      upgradeUrl: "/dashboard/upgrade"
-    });
-  }
-  next();
 };

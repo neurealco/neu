@@ -1,10 +1,9 @@
-// apps/backend/src/services/youtube.service.ts
 import { google } from 'googleapis';
 import config from '../config';
 import { supabase } from './supabase.service';
-import { deductCredits } from './credits.service';
 import { redisClient } from '../utils/cache.util';
-import { InsufficientCreditsError } from '../middleware/error.middleware';
+import { checkUsage, incrementUsage } from './usage.service';
+import { UsageLimitExceededError } from '../middleware/error.middleware';
 
 // Configuración de OAuth2
 const oauth2Client = new google.auth.OAuth2(
@@ -63,20 +62,16 @@ export const getRealTimeStats = async (userId: string, forceRefresh = false) => 
   // 3. Refrescar token si es necesario
   const accessToken = await refreshTokenIfNeeded(userId, token);
   
-  // 4. Solo deducir créditos si es refresco forzado
+  // 4. Si es un refresco forzado, verificar y aumentar el uso
   if (forceRefresh) {
-    try {
-      await deductCredits(
-        userId, 
-        50,
-        'Force refresh YouTube stats'
-      );
-    } catch (error) {
-      if (error instanceof InsufficientCreditsError) {
-        throw error;
-      }
-      throw new Error('Failed to deduct credits');
+    // Verificar límite de uso
+    const { currentUsage, limit } = await checkUsage(userId, 'youtube_refresh');
+    if (currentUsage >= limit) {
+      throw new UsageLimitExceededError('youtube_refresh', limit, currentUsage);
     }
+
+    // Incrementar el contador de uso
+    await incrementUsage(userId, 'youtube_refresh');
   }
 
   // 5. Obtener datos del canal
