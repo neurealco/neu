@@ -22,7 +22,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -t rsa,ed25519,ecdsa ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-          
+
       - name: Verify SSH connection
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
@@ -36,7 +36,7 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENV_EOF'
           set -e
           cd /opt/neureal/apps/backend
-          
+
           if [ ! -f .env ]; then
             echo "⚠️ .env file missing, creating new one..."
             touch .env
@@ -49,7 +49,7 @@ jobs:
           else
             echo "🔑 .env file already exists"
           fi
-          
+
           cp .env .env.backup
           ENV_EOF
 
@@ -60,28 +60,33 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           set -e
           set -x
-          
+
           cd /opt/neureal
-          
+
           git fetch origin
           git reset --hard origin/main
-          
+
           if [ ! -f apps/backend/.env ]; then
             echo "🔙 Restoring .env from backup..."
             cp apps/backend/.env.backup apps/backend/.env
           fi
-          
+
+          if [ ! -f nginx/nginx.conf ]; then
+            echo "❌ nginx.conf not found in /opt/neureal/nginx/nginx.conf"
+            exit 1
+          fi
+
           docker-compose build --no-cache --pull backend frontend nginx
-          
+
           echo "🔄 Restarting backend..."
           docker-compose up -d --force-recreate --no-deps backend
-          
+
           echo "🔄 Restarting frontend..."
           docker-compose up -d --force-recreate --no-deps frontend
-          
+
           echo "🔄 Restarting nginx..."
           docker-compose up -d --force-recreate nginx
-          
+
           echo "⏳ Waiting for services to be ready..."
           sleep 15
           EOF
@@ -91,7 +96,7 @@ jobs:
           ssh -o StrictHostKeyChecking=accept-new \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
           set -e
-          
+
           for i in {1..5}; do
             if docker-compose exec -T nginx nginx -t; then
               echo "✅ Nginx configuration test passed"
@@ -103,7 +108,7 @@ jobs:
               sleep 5
             fi
           done
-          
+
           echo "❌ Nginx failed to start after multiple attempts"
           exit 1
           NGINX_EOF
@@ -131,7 +136,7 @@ jobs:
             https://neureal.site
           uploadArtifacts: true
           temporaryPublicStorage: true
-          
+
       - name: Notify Slack
         if: always()
         uses: rtCamp/action-slack-notify@v2
@@ -143,7 +148,7 @@ jobs:
           SLACK_MESSAGE: "Deployment ${{ job.status }} for Neureal"
           SLACK_TITLE: "Production Deployment Report"
           SLACK_USERNAME: GitHub Actions Bot
-          
+
       - name: Rollback on failure
         if: failure()
         run: |
@@ -151,14 +156,14 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ROLLBACK_EOF'
           set -e
           echo "⚠️ Deployment failed! Starting rollback..."
-          
+
           cd /opt/neureal
           git reset --hard HEAD@{1}
-          
+
           cd apps/backend
           cp .env.backup .env || echo "Using existing .env"
-          
+
           docker-compose up -d --force-recreate
-          
+
           echo "🔙 Rollback completed successfully!"
           ROLLBACK_EOF
