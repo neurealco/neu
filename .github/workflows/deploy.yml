@@ -26,7 +26,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-
+          
       - name: Deploy and update
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
@@ -53,21 +53,22 @@ jobs:
           SLACK_TITLE: "Neureal CI/CD"
           SLACK_USERNAME: GitHub Actions Bot
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          
       - name: Health check
         run: |
           for i in 1 2 3; do
-          status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
-          if [ "$status" == "200" ]; then
-            echo "Health check passed."
-            exit 0
-          else
-            echo "Attempt $i: Health check failed with status $status."
-            sleep 5
-          fi
+            status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
+            if [ "$status" == "200" ]; then
+              echo "Health check passed."
+              exit 0
+            else
+              echo "Attempt $i: Health check failed with status $status."
+              sleep 5
+            fi
           done
           echo "::error::Health check failed after 3 attempts."
           exit 1
-
+          
       - name: Performance metrics
         uses: treosh/lighthouse-ci-action@v11
         with:
@@ -75,11 +76,13 @@ jobs:
             https://neureal.site
           uploadArtifacts: true
           temporaryPublicStorage: true
+          
+      # SOLUCIÓN CORREGIDA AQUÍ (usa un heredoc o comando en una línea)
       - name: Rollback on failure
         if: failure()
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd /opt/neureal
           git reset --hard HEAD@{1}
           docker-compose up -d --force-recreate
-        "
+          EOF
