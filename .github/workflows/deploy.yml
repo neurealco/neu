@@ -53,7 +53,7 @@ jobs:
           cp .env .env.backup
           ENV_EOF
               
-      - name: Deploy application
+            - name: Deploy application
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
               -o ConnectTimeout=20 \
@@ -85,29 +85,6 @@ jobs:
           echo "⏳ Waiting for services to be ready..."
           sleep 15
           EOF
-
-      - name: Verify & reload Nginx
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
-          set -e
-          
-          for i in {1..5}; do
-            if docker-compose exec -T nginx nginx -t; then
-              echo "✅ Nginx configuration test passed"
-              docker-compose exec -T nginx nginx -s reload
-              echo "🔁 Nginx reloaded successfully"
-              exit 0
-            else
-              echo "⚠️ Attempt $i: Nginx not ready, retrying in 5s..."
-              sleep 5
-            fi
-          done
-          
-          echo "❌ Nginx failed to start after multiple attempts"
-          exit 1
-          NGINX_EOF
-
 
       - name: Verify & reload Nginx
         run: |
