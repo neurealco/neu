@@ -71,7 +71,7 @@ jobs:
             cp apps/backend/.env.backup apps/backend/.env
           fi
           
-          docker-compose build --no-cache --pull backend frontend
+          docker-compose build --no-cache --pull backend frontend nginx
           
           echo "🔄 Restarting backend..."
           docker-compose up -d --force-recreate --no-deps backend
@@ -79,9 +79,35 @@ jobs:
           echo "🔄 Restarting frontend..."
           docker-compose up -d --force-recreate --no-deps frontend
           
+          echo "🔄 Restarting nginx..."
+          docker-compose up -d --force-recreate nginx
+          
           echo "⏳ Waiting for services to be ready..."
           sleep 15
           EOF
+
+      - name: Verify & reload Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
+          set -e
+          
+          for i in {1..5}; do
+            if docker-compose exec -T nginx nginx -t; then
+              echo "✅ Nginx configuration test passed"
+              docker-compose exec -T nginx nginx -s reload
+              echo "🔁 Nginx reloaded successfully"
+              exit 0
+            else
+              echo "⚠️ Attempt $i: Nginx not ready, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          
+          echo "❌ Nginx failed to start after multiple attempts"
+          exit 1
+          NGINX_EOF
+
 
       - name: Verify & reload Nginx
         run: |
