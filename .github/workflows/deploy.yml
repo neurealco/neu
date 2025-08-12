@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Necesario para git reset --hard
+          fetch-depth: 0
 
       - name: Setup SSH environment
         uses: webfactory/ssh-agent@v0.8.0
@@ -21,7 +21,6 @@ jobs:
       - name: Configure known hosts
         run: |
           mkdir -p ~/.ssh
-          # Añadir hosts conocidos con todos los algoritmos posibles
           ssh-keyscan -t rsa,ed25519,ecdsa ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           echo "👉 Known hosts:"
           cat ~/.ssh/known_hosts
@@ -38,8 +37,8 @@ jobs:
           ssh -o StrictHostKeyChecking=accept-new \
               -o ConnectTimeout=20 \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          set -e  # Exit immediately if any command fails
-          set -x  # Enable debug mode
+          set -e
+          set -x
           
           echo "👉 Current directory: $(pwd)"
           echo "👉 Moving to project directory..."
@@ -48,7 +47,8 @@ jobs:
           echo "👉 Updating from GitHub..."
           git fetch origin
           git reset --hard origin/main
-          git clean -fd
+          
+          # NO USAR git clean -fd (preserva archivos no rastreados como .env)
           
           echo "👉 Git status:"
           git status --short
@@ -68,9 +68,23 @@ jobs:
           echo "🚀 Deployment successful!"
           EOF
           
+      # PASO CRÍTICO: Restaurar el archivo .env
+      - name: Restore .env file
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /opt/neureal/apps/backend
+            if [ ! -f .env ]; then
+              echo '⚠️ .env file missing, restoring from backup...'
+              cp .env.example .env || echo 'Using default .env'
+              # Agregar aquí cualquier configuración necesaria
+              echo 'APP_ENV=production' >> .env
+              echo '✅ .env file restored'
+            fi
+          "
+          
       - name: Run health check
         run: |
-          # Intentar 5 veces con espera entre intentos
           for i in {1..5}; do
             status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
             if [ "$status" == "200" ]; then
@@ -85,6 +99,7 @@ jobs:
           exit 1
           
       - name: Performance test
+        if: success()
         uses: treosh/lighthouse-ci-action@v11
         with:
           urls: |
@@ -115,6 +130,10 @@ jobs:
           cd /opt/neureal
           echo "👉 Reverting to previous commit..."
           git reset --hard HEAD@{1}
+          
+          echo "👉 Restoring .env file..."
+          cd apps/backend
+          cp .env.backup .env || echo "Using existing .env"
           
           echo "👉 Restarting services..."
           docker-compose up -d --force-recreate
