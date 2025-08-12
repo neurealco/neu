@@ -29,8 +29,7 @@ jobs:
               -o ConnectTimeout=10 \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
               "echo '✅ SSH connection successful!'"
-              
-      # PASO CRÍTICO: Preparar el entorno ANTES del despliegue
+
       - name: Ensure .env exists
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
@@ -38,27 +37,19 @@ jobs:
           set -e
           cd /opt/neureal/apps/backend
           
-          # Crear .env si no existe
           if [ ! -f .env ]; then
             echo "⚠️ .env file missing, creating new one..."
             touch .env
             echo "# Auto-generated .env file" >> .env
             echo "APP_ENV=production" >> .env
-            
-            # Si existe .env.example, copiar su contenido
             if [ -f .env.example ]; then
-              echo "📋 Copying from .env.example..."
               cat .env.example >> .env
             fi
-            
-            # Agregar configuraciones esenciales
             echo "LOG_LEVEL=info" >> .env
-            echo "✅ Created new .env file"
           else
             echo "🔑 .env file already exists"
           fi
           
-          # Crear backup permanente
           cp .env .env.backup
           ENV_EOF
               
@@ -72,42 +63,61 @@ jobs:
           
           cd /opt/neureal
           
-          # Actualizar código
           git fetch origin
           git reset --hard origin/main
           
-          # Restaurar .env desde backup si fue eliminado
           if [ ! -f apps/backend/.env ]; then
             echo "🔙 Restoring .env from backup..."
             cp apps/backend/.env.backup apps/backend/.env
           fi
           
-          # Reconstruir contenedores
-          docker-compose build --no-cache --pull frontend backend
+          docker-compose build --no-cache --pull backend frontend
           
-          # Reiniciar servicios
-          docker-compose up -d --force-recreate --no-deps frontend backend
+          echo "🔄 Restarting backend..."
+          docker-compose up -d --force-recreate --no-deps backend
           
-          # Recargar Nginx
-          docker-compose exec -T nginx nginx -t
-          docker-compose exec -T nginx nginx -s reload
+          echo "🔄 Restarting frontend..."
+          docker-compose up -d --force-recreate --no-deps frontend
           
-          echo "🚀 Deployment successful!"
+          echo "⏳ Waiting for services to be ready..."
+          sleep 15
           EOF
+
+      - name: Verify & reload Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
+          set -e
           
+          for i in {1..5}; do
+            if docker-compose exec -T nginx nginx -t; then
+              echo "✅ Nginx configuration test passed"
+              docker-compose exec -T nginx nginx -s reload
+              echo "🔁 Nginx reloaded successfully"
+              exit 0
+            else
+              echo "⚠️ Attempt $i: Nginx not ready, retrying in 5s..."
+              sleep 5
+            fi
+          done
+          
+          echo "❌ Nginx failed to start after multiple attempts"
+          exit 1
+          NGINX_EOF
+
       - name: Run health check
         run: |
-          for i in {1..5}; do
+          for i in {1..10}; do
             status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
             if [ "$status" == "200" ]; then
               echo "✅ Health check passed with status 200"
               exit 0
             else
-              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 5s..."
-              sleep 5
+              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 10s..."
+              sleep 10
             fi
           done
-          echo "❌ Health check failed after 5 attempts"
+          echo "❌ Health check failed after 10 attempts"
           exit 1
 
       - name: Performance test
@@ -140,14 +150,11 @@ jobs:
           echo "⚠️ Deployment failed! Starting rollback..."
           
           cd /opt/neureal
-          echo "👉 Reverting to previous commit..."
           git reset --hard HEAD@{1}
           
-          echo "👉 Restoring .env file..."
           cd apps/backend
           cp .env.backup .env || echo "Using existing .env"
           
-          echo "👉 Restarting services..."
           docker-compose up -d --force-recreate
           
           echo "🔙 Rollback completed successfully!"
