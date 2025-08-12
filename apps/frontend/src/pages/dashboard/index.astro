@@ -76,27 +76,28 @@ try {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to refresh stats");
-        }
-
-        const result = await response.json();
-        
-        if (result.success) {
+          
+          // Manejar error de límite de uso
+          if (errorData.error?.includes("Monthly usage limit exceeded")) {
+            alert(`You've reached your monthly limit for stats refresh (${errorData.limit}). Upgrade your plan for more refreshes.`);
+          } else {
+            throw new Error(errorData.error || "Failed to refresh stats");
+          }
+        } else {
+          // Eliminamos la declaración de 'result' que no se usa
+          // Solo recargamos la página
           alert("Stats refreshed successfully!");
           window.location.reload();
-        } else {
-          throw new Error(result.message || "Refresh failed");
         }
       } catch (error) {
         console.error("Refresh error:", error);
         
-        // Convertir error a tipo Error
-        const err = error as Error;
-        let errorMessage = err.message || "Error refreshing stats";
-        
-        // Manejo especial para errores de créditos insuficientes
-        if (err.message.includes("Insufficient credits")) {
-          errorMessage = `${err.message}\n\nPlease complete surveys to earn more credits.`;
+        // Manejo seguro de errores
+        let errorMessage = "Error refreshing stats";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === "string") {
+          errorMessage = error;
         }
         
         alert(errorMessage);

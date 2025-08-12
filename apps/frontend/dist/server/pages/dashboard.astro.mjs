@@ -1,15 +1,8 @@
-import { c as createComponent, a as createAstro, m as maybeRenderHead, r as renderTemplate, b as addAttribute, d as renderComponent } from '../chunks/astro/server_LK4p-fTz.mjs';
-import { c as getSession, f as fetchDashboardData, $ as $$DashboardLayout } from '../chunks/api_Kzg-DvNO.mjs';
+import { c as createComponent, a as createAstro, m as maybeRenderHead, b as addAttribute, r as renderTemplate, d as renderComponent } from '../chunks/astro/server_LK4p-fTz.mjs';
+import { c as getSession, f as fetchDashboardData, $ as $$DashboardLayout } from '../chunks/api_BWjvruJB.mjs';
+import { $ as $$StatsCard } from '../chunks/StatsCard_7DOVS4RY.mjs';
 /* empty css                                 */
 export { renderers } from '../renderers.mjs';
-
-const $$Astro$2 = createAstro();
-const $$StatsCard = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$2, $$props, $$slots);
-  Astro2.self = $$StatsCard;
-  const { title, value, icon, trend } = Astro2.props;
-  return renderTemplate`${maybeRenderHead()}<div class="stats-card" data-astro-cid-ekonfjnm> <div class="stats-icon" data-astro-cid-ekonfjnm>${icon}</div> <div class="stats-content" data-astro-cid-ekonfjnm> <h3 data-astro-cid-ekonfjnm>${title}</h3> <div class="stats-value-container" data-astro-cid-ekonfjnm> <p class="stats-value" data-astro-cid-ekonfjnm>${value}</p> ${trend && renderTemplate`<span class="trend" data-astro-cid-ekonfjnm>${trend}</span>`} </div> </div> </div> `;
-}, "/workspaces/neu/apps/frontend/src/components/dashboard/StatsCard.astro", void 0);
 
 const $$Astro$1 = createAstro();
 const $$YouTubeStats = createComponent(($$result, $$props, $$slots) => {

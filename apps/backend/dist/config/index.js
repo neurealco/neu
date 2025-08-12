@@ -12,5 +12,12 @@ exports.default = {
     CACHE_TTL: 60 * 15,
     SITE_URL: process.env.SITE_URL || "",
     NODE_ENV: process.env.NODE_ENV || "",
+    // Configuración de Paddle
+    PADDLE_VENDOR_ID: process.env.PADDLE_VENDOR_ID || "",
     PADDLE_API_KEY: process.env.PADDLE_API_KEY || "",
+    PADDLE_PUBLIC_KEY: process.env.PADDLE_PUBLIC_KEY || "",
+    PADDLE_CHECKOUT_URL: process.env.PADDLE_CHECKOUT_URL || "https://checkout.paddle.com",
+    // IDs de planes de Paddle (nuevas variables)
+    PADDLE_PLUS_PLAN_ID: process.env.PADDLE_PLUS_PLAN_ID || "",
+    PADDLE_PRO_PLAN_ID: process.env.PADDLE_PRO_PLAN_ID || "",
 };

@@ -1,38 +1,24 @@
 import { API_BASE_URL } from './apiConfig';
 
-export const getUserCredits = async (userId: string) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/credits/balance`, {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch credits');
-    }
-    
-    const data = await response.json();
-    return data.credits;
-  } catch (error) {
-    console.error('Error fetching credits:', error);
-    throw error;
-  }
-};
-
-export const getTransactionHistory = async (userId: string) => {
-  const response = await fetch(`${API_BASE_URL}/credits/history`, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
-    }
+export const getUsage = async (userId: string) => {
+  const response = await fetch(`${API_BASE_URL}/usage?userId=${userId}`, {
+    credentials: 'include'
   });
   
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to fetch transaction history');
+    throw new Error('Failed to fetch usage data');
+  }
+  
+  return response.json();
+};
+
+export const getSubscriptionDetails = async (userId: string) => {
+  const response = await fetch(`${API_BASE_URL}/subscription?userId=${userId}`, {
+    credentials: 'include'
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch subscription details');
   }
   
   return response.json();
@@ -87,7 +73,6 @@ export const refreshStats = async () => {
   return response.json();
 };
 
-// Función para enviar mensajes al asistente IA
 export const sendAIMessage = async (userId: string, message: string) => {
   const response = await fetch(`${API_BASE_URL}/ai/chat`, {
     method: 'POST',

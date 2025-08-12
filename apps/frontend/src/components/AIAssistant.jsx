@@ -1,17 +1,14 @@
-// src/components/AIAssistant.jsx
 import { useState, useEffect, useRef } from "react";
 
-export default function AIAssistant({ initialCredits }) {
-  const [currentCredits, setCurrentCredits] = useState(initialCredits);
+export default function AIAssistant({ aiUsage }) {
   const [isSending, setIsSending] = useState(false);
+  const [usage, setUsage] = useState(aiUsage);
   const chatContainerRef = useRef(null);
   const messageInputRef = useRef(null);
 
   useEffect(() => {
-    // Scroll al fondo del chat cuando se añaden mensajes
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, []);
 
@@ -32,23 +29,24 @@ export default function AIAssistant({ initialCredits }) {
 
     if (chatContainerRef.current) {
       chatContainerRef.current.appendChild(messageDiv);
-      // Scroll al último mensaje
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   };
 
   const sendMessage = async () => {
     const message = messageInputRef.current?.value.trim();
-    if (!message || currentCredits < 100 || isSending) return;
+    if (!message || usage.current >= usage.limit || isSending) {
+      if (usage.current >= usage.limit) {
+        alert(`You've reached your monthly limit of ${usage.limit} AI chats. Upgrade your plan for more.`);
+      }
+      return;
+    }
 
-    // Añadir mensaje del usuario
     addMessage("user", message);
     messageInputRef.current.value = "";
     setIsSending(true);
 
     try {
-      // Enviar mensaje al backend
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: {
@@ -59,21 +57,18 @@ export default function AIAssistant({ initialCredits }) {
       });
 
       if (!response.ok) {
-        throw new Error("Error en la respuesta del servidor");
+        throw new Error("Server response error");
       }
 
       const data = await response.json();
-
-      // Añadir respuesta de la IA
       addMessage("ai", data.response);
 
-      // Actualizar créditos
-      setCurrentCredits((prev) => prev - 100);
+      setUsage(prev => ({
+        ...prev,
+        current: prev.current + 1
+      }));
     } catch (error) {
-      addMessage(
-        "ai",
-        `⚠️ Error: ${error.message}. Por favor intenta nuevamente.`
-      );
+      addMessage("ai", `⚠️ Error: ${error.message}. Please try again.`);
     } finally {
       setIsSending(false);
     }
@@ -82,12 +77,12 @@ export default function AIAssistant({ initialCredits }) {
   return (
     <div className="ai-assistant">
       <div className="chat-header">
-        <h1>Asistente de IA</h1>
-        <p>Consulta estrategias para mejorar tu canal de YouTube</p>
+        <h1>AI Assistant</h1>
+        <p>Get expert advice for your YouTube channel</p>
         <div className="credits-display">
-          <span className="credits-label">Créditos disponibles:</span>
+          <span className="credits-label">AI Chats this month:</span>
           <span className="credits-value">
-            {currentCredits.toLocaleString()}
+            {usage.current}/{usage.limit}
           </span>
         </div>
       </div>
@@ -96,15 +91,14 @@ export default function AIAssistant({ initialCredits }) {
         <div className="message ai">
           <div className="avatar">🤖</div>
           <div className="bubble">
-            ¡Hola! Soy tu asistente especializado en YouTube. Puedo ayudarte
-            con:
+            Hello! I'm your YouTube expert assistant. I can help you with:
             <ul>
-              <li>Estrategias para aumentar suscriptores</li>
-              <li>Optimización de títulos y descripciones</li>
-              <li>Análisis de tendencias de contenido</li>
-              <li>Ideas para mejorar el engagement</li>
+              <li>Subscriber growth strategies</li>
+              <li>Title and description optimization</li>
+              <li>Content trend analysis</li>
+              <li>Engagement improvement ideas</li>
             </ul>
-            Cada consulta cuesta 100 créditos. ¿En qué puedo ayudarte hoy?
+            Each query counts toward your monthly limit of {usage.limit} chats. How can I help you today?
           </div>
         </div>
       </div>
@@ -113,15 +107,12 @@ export default function AIAssistant({ initialCredits }) {
         <input
           ref={messageInputRef}
           type="text"
-          id="message-input"
-          placeholder="Escribe tu mensaje..."
-          disabled={currentCredits < 100 || isSending}
+          placeholder="Type your message..."
+          disabled={usage.current >= usage.limit || isSending}
           onKeyPress={(e) => e.key === "Enter" && sendMessage()}
         />
         <button
-          id="send-button"
-          className="btn"
-          disabled={currentCredits < 100 || isSending}
+          disabled={usage.current >= usage.limit || isSending}
           onClick={sendMessage}
         >
           <svg

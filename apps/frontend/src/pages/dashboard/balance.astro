@@ -1,6 +1,7 @@
 ---
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
-import { getUserCredits, getTransactionHistory } from "../../lib/api";
+import { getUsage, getSubscriptionDetails } from "../../lib/api";
+// Añadir importación de getSession
 import { getSession } from "../../lib/auth";
 
 const session = await getSession(Astro.request);
@@ -8,40 +9,72 @@ if (!session) {
   return Astro.redirect("/login");
 }
 
-const credits = await getUserCredits(session.user.id);
-const transactions = await getTransactionHistory(session.user.id);
+const usage = await getUsage(session.user.id);
+const subscription = await getSubscriptionDetails(session.user.id);
 ---
 
-<DashboardLayout title="Credits Balance">
-  <div class="balance-container">
-    <div class="balance-card">
-      <h1>Your Credits Balance</h1>
-      <div class="balance-amount">{credits.toLocaleString()}</div>
-      <p class="balance-info">
-        Use credits to access premium features and insights
-      </p>
 
-      <div class="balance-actions">
-        <a href="/pricing" class="btn btn-outline">Upgrade Plan</a>
+<DashboardLayout title="Usage & Subscription">
+  <div class="balance-container">
+    <div class="subscription-card">
+      <h1>Your Subscription Plan</h1>
+      <div class="plan-name">{subscription.plan.toUpperCase()}</div>
+      
+      <div class="plan-details">
+        <div class="detail">
+          <span>AI Chats:</span>
+          <span>{subscription.limits.ai_chat} per month</span>
+        </div>
+        <div class="detail">
+          <span>Stats Refresh:</span>
+          <span>{subscription.limits.youtube_refresh} per month</span>
+        </div>
+        <div class="detail">
+          <span>Status:</span>
+          <span class="status-active">Active</span>
+        </div>
+      </div>
+
+      <div class="plan-actions">
+        <a href="/pricing" class="btn">Upgrade Plan</a>
+        <a href="/subscription" class="btn btn-outline">Manage Subscription</a>
       </div>
     </div>
 
-    <div class="transactions">
-      <h2>Recent Transactions</h2>
-      <div class="transaction-list">
-        {transactions.map(transaction => (
-          <div class="transaction-item">
-            <div class="transaction-info">
-              <div class="transaction-title">{transaction.reason}</div>
-              <div class="transaction-date">
-                {new Date(transaction.created_at).toLocaleDateString()}
-              </div>
-            </div>
-            <div class={`transaction-amount ${transaction.amount > 0 ? 'positive' : 'negative'}`}>
-              {transaction.amount > 0 ? '+' : ''}{transaction.amount}
-            </div>
-          </div>
-        ))}
+    <div class="usage-stats">
+      <h2>Current Usage</h2>
+      
+      <div class="usage-item">
+        <div class="usage-info">
+          <div class="usage-title">AI Assistant Chats</div>
+          <div class="usage-date">Current monthly usage</div>
+        </div>
+        <div class="usage-amount">
+          {usage.ai_chat.current}/{usage.ai_chat.limit}
+        </div>
+      </div>
+      
+      <div class="usage-item">
+        <div class="usage-info">
+          <div class="usage-title">Stats Refresh</div>
+          <div class="usage-date">Current monthly usage</div>
+        </div>
+        <div class="usage-amount">
+          {usage.youtube_refresh.current}/{usage.youtube_refresh.limit}
+        </div>
+      </div>
+      
+      <div class="usage-item">
+        <div class="usage-info">
+          <div class="usage-title">Next Reset</div>
+          <div class="usage-date">Usage cycle resets on</div>
+        </div>
+        <div class="usage-amount">
+          {new Date().toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+        </div>
       </div>
     </div>
   </div>
@@ -51,54 +84,75 @@ const transactions = await getTransactionHistory(session.user.id);
   .balance-container {
     max-width: 800px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
   }
 
-  .balance-card {
+  .subscription-card {
     background: linear-gradient(135deg, var(--darker), rgba(30, 41, 59, 0.8));
     border: 1px solid var(--card-border);
     border-radius: 16px;
     padding: 40px;
     text-align: center;
-    margin-bottom: 40px;
   }
 
-  .balance-card h1 {
+  .subscription-card h1 {
     font-size: 2rem;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
 
-  .balance-amount {
-    font-size: 4rem;
+  .plan-name {
+    font-size: 2.5rem;
     font-weight: 700;
-    margin-bottom: 20px;
-    color: var(--success);
-  }
-
-  .balance-info {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
     margin-bottom: 30px;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
-  .balance-actions {
+  .plan-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+    text-align: left;
+  }
+
+  .detail {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 8px;
+  }
+
+  .status-active {
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  .plan-actions {
     display: flex;
     justify-content: center;
     gap: 20px;
+    margin-top: 20px;
   }
 
-  .transactions h2 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-  }
-
-  .transaction-list {
+  .usage-stats {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 16px;
-    overflow: hidden;
+    padding: 30px;
   }
 
-  .transaction-item {
+  .usage-stats h2 {
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    color: var(--text);
+  }
+
+  .usage-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -106,34 +160,42 @@ const transactions = await getTransactionHistory(session.user.id);
     border-bottom: 1px solid var(--card-border);
   }
 
-  .transaction-item:last-child {
+  .usage-item:last-child {
     border-bottom: none;
   }
 
-  .transaction-info {
+  .usage-info {
     flex-grow: 1;
   }
 
-  .transaction-title {
+  .usage-title {
     font-weight: 500;
     margin-bottom: 5px;
+    font-size: 1.1rem;
   }
 
-  .transaction-date {
+  .usage-date {
     font-size: 0.9rem;
     color: var(--text-secondary);
   }
 
-  .transaction-amount {
+  .usage-amount {
     font-weight: 700;
     font-size: 1.2rem;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 8px 15px;
+    border-radius: 20px;
+    min-width: 100px;
+    text-align: center;
   }
 
-  .positive {
-    color: var(--success);
-  }
-
-  .negative {
-    color: var(--danger);
+  @media (max-width: 768px) {
+    .plan-details {
+      grid-template-columns: 1fr;
+    }
+    
+    .plan-actions {
+      flex-direction: column;
+    }
   }
 </style>

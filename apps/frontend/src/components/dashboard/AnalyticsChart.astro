@@ -1,11 +1,58 @@
 ---
-// Componente de gráfico (simulado)
+// Componente de gráfico de analytics
 ---
 
 <div class="analytics-chart">
-  <h3>Analytics Overview</h3>
-  <div class="chart-placeholder">
-    <p>Interactive chart will be displayed here</p>
+  <h3>Audience Growth</h3>
+  <div class="chart-container">
+    <div class="chart-header">
+      <div class="chart-legend">
+        <div class="legend-item">
+          <span class="color-dot" style="background-color: var(--primary)"></span>
+          <span>Subscribers</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-dot" style="background-color: var(--success)"></span>
+          <span>Views</span>
+        </div>
+      </div>
+      <div class="chart-actions">
+        <button class="btn-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="chart-placeholder">
+      <div class="chart-grid">
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+        <div class="grid-line"></div>
+      </div>
+      <div class="chart-data">
+        <div class="data-bar" style="height: 60%"></div>
+        <div class="data-bar" style="height: 80%"></div>
+        <div class="data-bar" style="height: 45%"></div>
+        <div class="data-bar" style="height: 75%"></div>
+        <div class="data-bar" style="height: 65%"></div>
+        <div class="data-bar" style="height: 90%"></div>
+        <div class="data-bar" style="height: 50%"></div>
+      </div>
+      <div class="chart-labels">
+        <span>Mon</span>
+        <span>Tue</span>
+        <span>Wed</span>
+        <span>Thu</span>
+        <span>Fri</span>
+        <span>Sat</span>
+        <span>Sun</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -15,7 +62,6 @@
     border: 1px solid var(--card-border);
     border-radius: 16px;
     padding: 24px;
-    margin-top: 30px;
   }
 
   .analytics-chart h3 {
@@ -24,13 +70,108 @@
     color: var(--text);
   }
 
-  .chart-placeholder {
+  .chart-container {
+    display: flex;
+    flex-direction: column;
     height: 300px;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 15px;
+  }
+
+  .legend-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: rgba(30, 41, 59, 0.5);
-    border-radius: 12px;
+    gap: 5px;
+    font-size: 0.9rem;
     color: var(--text-secondary);
+  }
+
+  .color-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+  }
+
+  .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .chart-placeholder {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 20px;
+  }
+
+  .chart-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .grid-line {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex: 1;
+  }
+
+  .chart-data {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 85%;
+    z-index: 1;
+    padding: 0 10px;
+  }
+
+  .data-bar {
+    width: 40px;
+    background: var(--primary);
+    border-radius: 6px 6px 0 0;
+    position: relative;
+    transition: height 0.5s ease;
+  }
+
+  .data-bar:nth-child(2n) {
+    background: var(--success);
+  }
+
+  .data-bar:hover {
+    opacity: 0.8;
+  }
+
+  .chart-labels {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
   }
 </style>

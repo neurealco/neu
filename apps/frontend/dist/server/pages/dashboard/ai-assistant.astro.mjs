@@ -1,5 +1,5 @@
 import { c as createComponent, a as createAstro, d as renderComponent, r as renderTemplate } from '../../chunks/astro/server_LK4p-fTz.mjs';
-import { g as getSession, a as getUserCredits, $ as $$DashboardLayout } from '../../chunks/api_Kzg-DvNO.mjs';
+import { g as getSession, a as getUsage, $ as $$DashboardLayout } from '../../chunks/api_BWjvruJB.mjs';
 /* empty css                                           */
 export { renderers } from '../../renderers.mjs';
 
@@ -11,8 +11,8 @@ const $$AiAssistant = createComponent(async ($$result, $$props, $$slots) => {
   if (!session) {
     return Astro2.redirect("/login");
   }
-  const credits = await getUserCredits(session.user.id);
-  return renderTemplate`${renderComponent($$result, "DashboardLayout", $$DashboardLayout, { "title": "AI Assistant", "data-astro-cid-6gjp5hge": true }, { "default": async ($$result2) => renderTemplate` ${renderComponent($$result2, "AIAssistant", null, { "client:only": "react", "initialCredits": credits, "client:component-hydration": "only", "data-astro-cid-6gjp5hge": true, "client:component-path": "/workspaces/neu/apps/frontend/src/components/AIAssistant.jsx", "client:component-export": "default" })} ` })} `;
+  const usage = await getUsage(session.user.id);
+  return renderTemplate`${renderComponent($$result, "DashboardLayout", $$DashboardLayout, { "title": "AI Assistant", "data-astro-cid-6gjp5hge": true }, { "default": async ($$result2) => renderTemplate` ${renderComponent($$result2, "AIAssistant", null, { "client:only": "react", "aiUsage": usage.ai_chat, "client:component-hydration": "only", "data-astro-cid-6gjp5hge": true, "client:component-path": "/workspaces/neu/apps/frontend/src/components/AIAssistant.jsx", "client:component-export": "default" })} ` })} `;
 }, "/workspaces/neu/apps/frontend/src/pages/dashboard/ai-assistant.astro", void 0);
 
 const $$file = "/workspaces/neu/apps/frontend/src/pages/dashboard/ai-assistant.astro";

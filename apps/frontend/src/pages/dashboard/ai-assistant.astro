@@ -1,6 +1,6 @@
 ---
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
-import { getUserCredits } from "../../lib/api";
+import { getUsage } from "../../lib/api";
 import { getSession } from "../../lib/auth";
 import AIAssistant from "../../components/AIAssistant.jsx";
 
@@ -9,11 +9,14 @@ if (!session) {
   return Astro.redirect("/login");
 }
 
-const credits = await getUserCredits(session.user.id);
+const usage = await getUsage(session.user.id);
 ---
 
 <DashboardLayout title="AI Assistant">
-  <AIAssistant client:only="react" initialCredits={credits} />
+  <AIAssistant 
+    client:only="react" 
+    aiUsage={usage.ai_chat} 
+  />
 </DashboardLayout>
 
 <style>
