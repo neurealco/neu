@@ -52,8 +52,8 @@ jobs:
           
           cp .env .env.backup
           ENV_EOF
-              
-            - name: Deploy application
+
+      - name: Deploy application
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
               -o ConnectTimeout=20 \
