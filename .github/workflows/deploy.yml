@@ -3,10 +3,6 @@ name: Production Deployment
 on:
   push:
     branches: [main]
-    paths:
-      - 'apps/**'
-      - 'nginx/**'
-      - 'docker-compose.yml'
 
 jobs:
   deploy:
@@ -15,61 +11,80 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Necesario para git reset --hard
 
-      - name: Setup SSH
+      - name: Setup SSH environment
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add known hosts
+      - name: Configure known hosts
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          # Añadir hosts conocidos con todos los algoritmos posibles
+          ssh-keyscan -t rsa,ed25519,ecdsa ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          echo "👉 Known hosts:"
+          cat ~/.ssh/known_hosts
           
-      - name: Deploy and update
+      - name: Verify SSH connection
         run: |
-          ssh -o StrictHostKeyChecking=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd /opt/neureal
-            git pull origin main
-            docker-compose build --no-cache frontend backend
-            docker-compose up -d --force-recreate --no-deps frontend backend
-            docker-compose exec -T nginx nginx -t && docker-compose exec -T nginx nginx -s reload
-          "
-          
-      - name: Copy .env to server
+          ssh -o StrictHostKeyChecking=accept-new \
+              -o ConnectTimeout=10 \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+              "echo '✅ SSH connection successful!'"
+              
+      - name: Deploy application
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /opt/neureal/apps/backend"
-          scp apps/backend/.env ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/neureal/apps/backend/.env
+          ssh -o StrictHostKeyChecking=accept-new \
+              -o ConnectTimeout=20 \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          set -e  # Exit immediately if any command fails
+          set -x  # Enable debug mode
           
-      - name: Deployment status
-        uses: rtCamp/action-slack-notify@v2
-        if: always()
-        env:
-          SLACK_CHANNEL: deployments
-          SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
-          SLACK_ICON_EMOJI: rocket
-          SLACK_MESSAGE: "Deployment ${{ job.status }} to production"
-          SLACK_TITLE: "Neureal CI/CD"
-          SLACK_USERNAME: GitHub Actions Bot
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          echo "👉 Current directory: $(pwd)"
+          echo "👉 Moving to project directory..."
+          cd /opt/neureal
           
-      - name: Health check
+          echo "👉 Updating from GitHub..."
+          git fetch origin
+          git reset --hard origin/main
+          git clean -fd
+          
+          echo "👉 Git status:"
+          git status --short
+          echo "👉 Latest commit:"
+          git log -1 --oneline
+          
+          echo "👉 Rebuilding containers..."
+          docker-compose build --no-cache --pull frontend backend
+          
+          echo "👉 Restarting services..."
+          docker-compose up -d --force-recreate --no-deps frontend backend
+          
+          echo "👉 Reloading Nginx..."
+          docker-compose exec -T nginx nginx -t
+          docker-compose exec -T nginx nginx -s reload
+          
+          echo "🚀 Deployment successful!"
+          EOF
+          
+      - name: Run health check
         run: |
-          for i in 1 2 3; do
+          # Intentar 5 veces con espera entre intentos
+          for i in {1..5}; do
             status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
             if [ "$status" == "200" ]; then
-              echo "Health check passed."
+              echo "✅ Health check passed with status 200"
               exit 0
             else
-              echo "Attempt $i: Health check failed with status $status."
+              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 5s..."
               sleep 5
             fi
           done
-          echo "::error::Health check failed after 3 attempts."
+          echo "❌ Health check failed after 5 attempts"
           exit 1
           
-      - name: Performance metrics
+      - name: Performance test
         uses: treosh/lighthouse-ci-action@v11
         with:
           urls: |
@@ -77,12 +92,32 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           
-      # SOLUCIÓN CORREGIDA AQUÍ (usa un heredoc o comando en una línea)
+      - name: Notify Slack
+        if: always()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: deployments
+          SLACK_COLOR: ${{ job.status == 'success' && '#36a64f' || '#ff0000' }}
+          SLACK_ICON_EMOJI: ${{ job.status == 'success' && ':rocket:' || ':fire:' }}
+          SLACK_MESSAGE: "Deployment ${{ job.status }} for Neureal"
+          SLACK_TITLE: "Production Deployment Report"
+          SLACK_USERNAME: GitHub Actions Bot
+          
       - name: Rollback on failure
         if: failure()
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ROLLBACK_EOF'
+          set -e
+          echo "⚠️ Deployment failed! Starting rollback..."
+          
           cd /opt/neureal
+          echo "👉 Reverting to previous commit..."
           git reset --hard HEAD@{1}
+          
+          echo "👉 Restarting services..."
           docker-compose up -d --force-recreate
-          EOF
+          
+          echo "🔙 Rollback completed successfully!"
+          ROLLBACK_EOF
