@@ -115,8 +115,8 @@ jobs:
           # Construir imágenes
           docker-compose build --no-cache --pull backend frontend nginx
 
-          # Iniciar servicios principales
-          docker-compose up -d frontend backend redis nginx
+          # Iniciar servicios principales SIN nginx
+          docker-compose up -d frontend backend redis
 
           echo "⏳ Waiting for services to be ready..."
           sleep 10
@@ -153,24 +153,48 @@ jobs:
           sleep 5
           SSL_EOF
 
+      - name: Start Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_START_EOF'
+          set -e
+          cd /opt/neureal
+          
+          # Iniciar Nginx después de certificados
+          docker-compose up -d --no-deps nginx
+          
+          echo "⏳ Waiting for Nginx to start..."
+          sleep 10
+          NGINX_START_EOF
+
       - name: Verify & reload Nginx
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
           set -e
+          cd /opt/neureal
 
-          # Esperar a que Nginx esté listo
+          # Verificar que nginx.conf existe
+          if [ ! -f "nginx/nginx.conf" ]; then
+            echo "❌ nginx.conf not found!"
+            exit 1
+          fi
+
+          # Verificar configuración de Nginx
           for i in {1..5}; do
             if docker-compose exec -T nginx nginx -t; then
               echo "✅ Nginx configuration test passed"
               docker-compose exec -T nginx nginx -s reload
               echo "🔁 Nginx reloaded successfully"
-              break
+              exit 0
             else
-              echo "⚠️ Attempt $i: Nginx not ready, retrying in 5s..."
+              echo "⚠️ Attempt $i: Nginx configuration test failed, retrying in 5s..."
               sleep 5
             fi
           done
+
+          echo "❌ Nginx failed to start after multiple attempts"
+          exit 1
           NGINX_EOF
 
       - name: Run health check
