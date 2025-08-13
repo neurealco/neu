@@ -1,286 +1,77 @@
-name: Production Deployment
+version: '3.8'
 
-on:
-  push:
-    branches: [main]
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    environment:
+      - PUBLIC_API_BASE_URL=https://neureal.site/api
+      - PUBLIC_SITE_URL=https://neureal.site
+    networks:
+      - neureal-net
+    restart: unless-stopped
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Certbot email
-        run: |
-          if [ -z "${{ secrets.CERTBOT_EMAIL }}" ]; then
-            echo "::error::CERTBOT_EMAIL secret is not set"
-            exit 1
-          fi
-          echo "✅ CERTBOT_EMAIL is set"
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    env_file: 
+      - apps/backend/.env
+    networks:
+      - neureal-net
+    depends_on:
+      - redis
+    restart: unless-stopped
 
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  redis:
+    image: redis:alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+    networks:
+      - neureal-net
+    restart: unless-stopped
 
-      - name: Setup SSH environment
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/mime.types:/etc/nginx/mime.types:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:rw
+    networks:
+      - neureal-net
+    restart: unless-stopped
+    # Forzar el reinicio si falla
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-      - name: Configure known hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -t rsa,ed25519,ecdsa ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt:rw
+      - ./certbot/www:/var/www/certbot:rw
+    # Comando mejorado para renovaciones
+    command: sh -c "while true; do sleep 12h; certbot renew; done;"
+    networks:
+      - neureal-net
+    restart: unless-stopped
 
-      - name: Verify SSH connection
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              -o ConnectTimeout=10 \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-              "echo '✅ SSH connection successful!'"
+networks:
+  neureal-net:
+    driver: bridge
+    # Configuración IPAM fija para evitar conflictos
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
 
-      - name: Pre-deploy setup
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'PRE_EOF'
-          set -e
-          cd /opt/neureal
-          
-          # Detener y deshabilitar servicios conflictivos
-          sudo systemctl stop nginx apache2 || true
-          sudo systemctl disable nginx apache2 || true
-          sudo pkill -9 nginx || true
-          
-          # Limpiar directorios de certificados previos
-          rm -rf certbot/conf/*
-          
-          # Verificar puertos
-          echo "🔄 Checking ports 80 and 443"
-          sudo lsof -i :80 || echo "Port 80 free"
-          sudo lsof -i :443 || echo "Port 443 free"
-          PRE_EOF
-
-      - name: Ensure .env exists
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENV_EOF'
-          set -e
-          cd /opt/neureal/apps/backend
-
-          if [ ! -f .env ]; then
-            echo "⚠️ .env file missing, creating new one..."
-            touch .env
-            echo "# Auto-generated .env file" >> .env
-            echo "APP_ENV=production" >> .env
-            if [ -f .env.example ]; then
-              echo "🔧 Populating from .env.example"
-              cat .env.example >> .env
-            fi
-            echo "LOG_LEVEL=info" >> .env
-          else
-            echo "🔑 .env file already exists"
-          fi
-          ENV_EOF
-
-      - name: Deploy application
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              -o ConnectTimeout=20 \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          set -e
-          set -x
-
-          cd /opt/neureal
-
-          # Guardar el estado actual de .env antes de actualizar
-          if [ -f apps/backend/.env ]; then
-            echo "💾 Backing up existing .env"
-            cp apps/backend/.env apps/backend/.env.tmp
-          fi
-
-          # Actualizar código
-          git fetch origin
-          git reset --hard origin/main
-
-          # Restaurar .env si existía
-          if [ -f apps/backend/.env.tmp ]; then
-            echo "🔄 Restoring .env from temporary backup"
-            mv apps/backend/.env.tmp apps/backend/.env
-          fi
-
-          # Crear .env si no existe después de actualizar
-          if [ ! -f apps/backend/.env ]; then
-            echo "⚠️ .env still missing, creating minimal version"
-            touch apps/backend/.env
-            echo "APP_ENV=production" >> apps/backend/.env
-            echo "LOG_LEVEL=info" >> apps/backend/.env
-          fi
-
-          # Limpiar contenedores antiguos
-          docker-compose down --remove-orphans || true
-
-          # Construir imágenes
-          docker-compose build --no-cache --pull backend frontend nginx
-
-          # Iniciar servicios principales SIN nginx
-          docker-compose up -d frontend backend redis
-
-          echo "⏳ Waiting for services to be ready..."
-          sleep 10
-          EOF
-
-      - name: Prepare for SSL certificates
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'PREP_SSL_EOF'
-          set -e
-          cd /opt/neureal
-          
-          # Crear directorios necesarios
-          mkdir -p certbot/conf certbot/www
-          
-          # Iniciar solo nginx para desafíos ACME
-          docker-compose up -d nginx
-          
-          # Esperar a que Nginx esté listo
-          for i in {1..10}; do
-            if docker-compose exec -T nginx curl -s -o /dev/null http://localhost; then
-              echo "✅ Nginx is ready"
-              break
-            else
-              echo "⚠️ Waiting for Nginx to start (attempt $i)"
-              sleep 5
-            fi
-          done
-
-          # Verificar acceso ACME
-          mkdir -p certbot/www/.well-known/acme-challenge
-          echo "TEST" > certbot/www/.well-known/acme-challenge/test.txt
-          PUBLIC_IP=$(curl -s ifconfig.me)
-          echo "🌐 Testing ACME challenge at http://$PUBLIC_IP/.well-known/acme-challenge/test.txt"
-          curl -v --retry 3 --retry-delay 5 http://$PUBLIC_IP/.well-known/acme-challenge/test.txt || true
-          PREP_SSL_EOF
-
-      - name: Handle SSL certificates
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'SSL_EOF'
-          set -e
-          cd /opt/neureal
-          
-          EMAIL="${{ secrets.CERTBOT_EMAIL }}"
-          if [ -z "$EMAIL" ]; then
-            echo "❌ CERTBOT_EMAIL is not set"
-            exit 1
-          fi
-          
-          echo "🔐 Initial SSL certificate setup with email: $EMAIL"
-          
-          # Obtener certificados con modo detallado
-          docker-compose run --rm certbot certonly --webroot \
-            --webroot-path /var/www/certbot \
-            -d neureal.site -d www.neureal.site \
-            --email "$EMAIL" \
-            --agree-tos --non-interactive --force-renewal \
-            --verbose
-          
-          # Verificar que los certificados se crearon
-          if [ ! -f "certbot/conf/live/neureal.site/fullchain.pem" ]; then
-            echo "❌ SSL certificate generation failed"
-            echo "=== Certbot logs ==="
-            docker-compose logs certbot || true
-            echo "=== Nginx access logs ==="
-            docker-compose exec -T nginx tail -n 50 /var/log/nginx/access.log || true
-            exit 1
-          fi
-          
-          echo "✅ SSL certificates generated successfully"
-          
-          # Iniciar certbot en modo renovación
-          docker-compose up -d --no-deps certbot
-          SSL_EOF
-
-      - name: Configure Nginx with SSL
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_CONF_EOF'
-          set -e
-          cd /opt/neureal
-          
-          # Actualizar rutas de certificados en nginx.conf
-          sed -i 's|ssl_certificate .*|ssl_certificate /etc/letsencrypt/live/neureal.site/fullchain.pem;|' nginx/nginx.conf
-          sed -i 's|ssl_certificate_key .*|ssl_certificate_key /etc/letsencrypt/live/neureal.site/privkey.pem;|' nginx/nginx.conf
-          
-          # Recargar Nginx para aplicar certificados
-          docker-compose exec -T nginx nginx -s reload
-          NGINX_CONF_EOF
-
-      - name: Verify Nginx
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
-          set -e
-          cd /opt/neureal
-          
-          # Verificar configuración
-          docker-compose exec -T nginx nginx -t
-          
-          # Verificar estado SSL
-          echo "🔒 Testing SSL connection"
-          curl -Isk https://neureal.site | grep "HTTP" || true
-          NGINX_EOF
-
-      - name: Run health check
-        run: |
-          for i in {1..10}; do
-            status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site || echo "000")
-            if [ "$status" == "200" ]; then
-              echo "✅ Health check passed with status 200"
-              exit 0
-            else
-              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 10s..."
-              sleep 10
-            fi
-          done
-          echo "❌ Health check failed after 10 attempts"
-          exit 1
-
-      - name: Performance test
-        if: success()
-        uses: treosh/lighthouse-ci-action@v11
-        with:
-          urls: |
-            https://neureal.site
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-
-      - name: Notify Slack
-        if: always()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: deployments
-          SLACK_COLOR: ${{ job.status == 'success' && '#36a64f' || '#ff0000' }}
-          SLACK_ICON_EMOJI: ${{ job.status == 'success' && ':rocket:' || ':fire:' }}
-          SLACK_MESSAGE: "Deployment ${{ job.status }} for Neureal"
-          SLACK_TITLE: "Production Deployment Report"
-          SLACK_USERNAME: GitHub Actions Bot
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ROLLBACK_EOF'
-          set -e
-          echo "⚠️ Deployment failed! Starting rollback..."
-
-          cd /opt/neureal
-          git reset --hard HEAD@{1}
-
-          # Detener servicios conflictivos
-          sudo systemctl stop nginx apache2 || true
-          
-          docker-compose down --remove-orphans
-          docker-compose up -d
-
-          echo "🔙 Rollback completed successfully!"
-          ROLLBACK_EOF
+volumes:
+  redis-data:
