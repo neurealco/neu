@@ -37,20 +37,20 @@ jobs:
           set -e
           cd /opt/neureal/apps/backend
 
+          # Crear .env solo si no existe
           if [ ! -f .env ]; then
             echo "⚠️ .env file missing, creating new one..."
             touch .env
             echo "# Auto-generated .env file" >> .env
             echo "APP_ENV=production" >> .env
             if [ -f .env.example ]; then
+              echo "🔧 Populating from .env.example"
               cat .env.example >> .env
             fi
             echo "LOG_LEVEL=info" >> .env
           else
             echo "🔑 .env file already exists"
           fi
-
-          cp .env .env.backup
           ENV_EOF
 
       - name: Deploy application
@@ -61,23 +61,39 @@ jobs:
           set -e
           set -x
 
-          # Detener y deshabilitar Nginx/Apache del sistema
+          # Detener y deshabilitar servicios conflictivos
           sudo systemctl stop nginx apache2 || true
           sudo systemctl disable nginx apache2 || true
           sudo pkill -9 nginx || true
 
           cd /opt/neureal
 
+          # Guardar el estado actual de .env antes de actualizar
+          if [ -f apps/backend/.env ]; then
+            echo "💾 Backing up existing .env"
+            cp apps/backend/.env apps/backend/.env.tmp
+          fi
+
+          # Actualizar código
           git fetch origin
           git reset --hard origin/main
 
+          # Restaurar .env si existía
+          if [ -f apps/backend/.env.tmp ]; then
+            echo "🔄 Restoring .env from temporary backup"
+            mv apps/backend/.env.tmp apps/backend/.env
+          fi
+
+          # Crear .env si no existe después de actualizar
           if [ ! -f apps/backend/.env ]; then
-            echo "🔙 Restoring .env from backup..."
-            cp apps/backend/.env.backup apps/backend/.env
+            echo "⚠️ .env still missing, creating minimal version"
+            touch apps/backend/.env
+            echo "APP_ENV=production" >> apps/backend/.env
+            echo "LOG_LEVEL=info" >> apps/backend/.env
           fi
 
           # Limpiar contenedores antiguos
-          docker-compose down --remove-orphans
+          docker-compose down --remove-orphans || true
 
           # Construir imágenes
           docker-compose build --no-cache --pull backend frontend nginx
@@ -94,17 +110,13 @@ jobs:
           ssh -o StrictHostKeyChecking=accept-new \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'CERTBOT_EOF'
           set -e
-          
           cd /opt/neureal
           
-          # Verificar si los certificados necesitan renovación
-          docker-compose run --rm certbot renew --dry-run
-          
-          # Renovar certificados reales
-          docker-compose run --rm certbot renew
+          # Renovar certificados si es necesario
+          docker-compose run --rm certbot renew --quiet
           
           # Recargar Nginx para aplicar nuevos certificados
-          docker-compose exec nginx nginx -s reload
+          docker-compose exec nginx nginx -s reload || true
           CERTBOT_EOF
 
       - name: Verify & reload Nginx
@@ -175,9 +187,6 @@ jobs:
 
           cd /opt/neureal
           git reset --hard HEAD@{1}
-
-          cd apps/backend
-          cp .env.backup .env || echo "Using existing .env"
 
           # Detener servicios conflictivos
           sudo systemctl stop nginx apache2 || true
