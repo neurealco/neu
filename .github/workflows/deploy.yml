@@ -142,16 +142,59 @@ jobs:
               -d neureal.site -d www.neureal.site \
               --email ${{ secrets.CERTBOT_EMAIL }} \
               --agree-tos --non-interactive --force-renewal
+            
+            # Verificar que los certificados se crearon
+            if [ ! -f "certbot/conf/live/neureal.site/fullchain.pem" ]; then
+              echo "❌ SSL certificate generation failed"
+              echo "=== Certbot logs ==="
+              docker-compose logs certbot || true
+              exit 1
+            fi
           else
             echo "✅ SSL certificates already exist"
           fi
           
-          # Iniciar certbot en modo renovación (con política de reinicio)
+          # Iniciar certbot en modo renovación
           docker-compose up -d --no-deps certbot
           
           # Esperar a que certbot se estabilice
           sleep 5
           SSL_EOF
+
+      - name: Verify certificates
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'CERT_EOF'
+          set -e
+          cd /opt/neureal
+          
+          # Verificar que los certificados existen
+          if [ ! -f "certbot/conf/live/neureal.site/fullchain.pem" ]; then
+            echo "❌ SSL certificate not found at certbot/conf/live/neureal.site/fullchain.pem"
+            echo "=== Directory structure ==="
+            tree certbot/conf || ls -laR certbot/conf
+            exit 1
+          fi
+          
+          # Verificar permisos
+          echo "🔒 Certificate permissions:"
+          ls -la certbot/conf/live/neureal.site/
+          CERT_EOF
+
+      - name: Update Nginx configuration
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_CONF_EOF'
+          set -e
+          cd /opt/neureal
+          
+          # Actualizar rutas de certificados en nginx.conf
+          sed -i 's|ssl_certificate .*|ssl_certificate /etc/letsencrypt/live/neureal.site/fullchain.pem;|' nginx/nginx.conf
+          sed -i 's|ssl_certificate_key .*|ssl_certificate_key /etc/letsencrypt/live/neureal.site/privkey.pem;|' nginx/nginx.conf
+          
+          # Verificar configuración
+          docker run --rm -v $(pwd)/nginx/nginx.conf:/etc/nginx/nginx.conf nginx:alpine nginx -t
+          NGINX_CONF_EOF
 
       - name: Start Nginx
         run: |
@@ -159,9 +202,6 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_START_EOF'
           set -e
           cd /opt/neureal
-          
-          # Verificar configuración antes de iniciar
-          docker run --rm -v /opt/neureal/nginx/nginx.conf:/etc/nginx/nginx.conf nginx:alpine nginx -t
           
           # Iniciar Nginx después de certificados
           docker-compose up -d --no-deps nginx
@@ -174,10 +214,6 @@ jobs:
             if [ "$status" = "running" ]; then
               echo "✅ Nginx is running"
               break
-            elif [ "$status" = "restarting" ]; then
-              echo "🔄 Nginx is restarting (attempt $i), checking logs..."
-              docker-compose logs nginx || true
-              sleep 5
             else
               echo "⚠️ Nginx status: $status (attempt $i)"
               sleep 5
@@ -206,6 +242,10 @@ jobs:
           # Verificar configuración dentro del contenedor
           docker-compose exec -T nginx nginx -t
           echo "✅ Nginx configuration test passed"
+          
+          # Recargar Nginx para aplicar cambios
+          docker-compose exec -T nginx nginx -s reload
+          echo "🔁 Nginx reloaded successfully"
           NGINX_EOF
 
       - name: Run health check
