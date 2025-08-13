@@ -30,6 +30,25 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
               "echo '✅ SSH connection successful!'"
 
+      - name: Pre-deploy setup
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'PRE_EOF'
+          set -e
+          cd /opt/neureal
+          
+          # Detener y deshabilitar servicios conflictivos
+          sudo systemctl stop nginx apache2 || true
+          sudo systemctl disable nginx apache2 || true
+          sudo pkill -9 nginx || true
+          
+          # Limpiar directorios de certificados previos
+          rm -rf certbot/conf/*
+          
+          # Verificar si se necesitan certificados SSL
+          export SSL_CERTS_EXIST=$(test -d "certbot/conf/live/neureal.site" && echo "1" || echo "0")
+          PRE_EOF
+
       - name: Ensure .env exists
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
@@ -52,22 +71,6 @@ jobs:
           fi
           ENV_EOF
 
-      - name: Pre-deploy setup
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'PRE_EOF'
-          set -e
-          cd /opt/neureal
-          
-          # Detener y deshabilitar servicios conflictivos
-          sudo systemctl stop nginx apache2 || true
-          sudo systemctl disable nginx apache2 || true
-          sudo pkill -9 nginx || true
-          
-          # Verificar si se necesitan certificados SSL
-          export SSL_CERTS_EXIST=$(test -d "certbot/conf/live/neureal.site" && echo "1" || echo "0")
-          PRE_EOF
-
       - name: Deploy application
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
@@ -87,13 +90,6 @@ jobs:
           # Actualizar código
           git fetch origin
           git reset --hard origin/main
-
-          # Corregir docker-compose.yml si es necesario
-          if grep -A5 'certbot:' docker-compose.yml | grep -q 'restart:.*restart:'; then
-            echo "🔧 Fixing duplicate restart in docker-compose.yml"
-            sed -i '/^  certbot:/,/^  [a-z]/ {/restart: unless-stopped/d}' docker-compose.yml
-            echo "    restart: unless-stopped" >> docker-compose.yml
-          fi
 
           # Restaurar .env si existía
           if [ -f apps/backend/.env.tmp ]; then
@@ -122,6 +118,23 @@ jobs:
           sleep 10
           EOF
 
+      - name: Prepare for SSL certificates
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'PREP_SSL_EOF'
+          set -e
+          cd /opt/neureal
+          
+          # Crear directorios necesarios
+          mkdir -p certbot/conf certbot/www
+          
+          # Configurar Nginx para desafíos ACME
+          docker-compose up -d nginx
+          
+          # Esperar a que Nginx esté listo
+          sleep 5
+          PREP_SSL_EOF
+
       - name: Handle SSL certificates
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
@@ -129,30 +142,33 @@ jobs:
           set -e
           cd /opt/neureal
           
-          # Solo configurar SSL si no existe
-          if [ "$SSL_CERTS_EXIST" = "0" ]; then
-            echo "🔐 Initial SSL certificate setup"
-            
-            # Crear directorios necesarios
-            mkdir -p certbot/conf certbot/www
-            
-            # Obtener certificados iniciales
-            docker-compose run --rm certbot certonly --webroot \
-              --webroot-path /var/www/certbot \
-              -d neureal.site -d www.neureal.site \
-              --email ${{ secrets.CERTBOT_EMAIL }} \
-              --agree-tos --non-interactive --force-renewal
-            
-            # Verificar que los certificados se crearon
-            if [ ! -f "certbot/conf/live/neureal.site/fullchain.pem" ]; then
-              echo "❌ SSL certificate generation failed"
-              echo "=== Certbot logs ==="
-              docker-compose logs certbot || true
-              exit 1
-            fi
-          else
-            echo "✅ SSL certificates already exist"
+          echo "🔐 Initial SSL certificate setup"
+          
+          # Verificar acceso a desafíos ACME
+          echo "🌐 Testing ACME challenge access"
+          mkdir -p certbot/www/.well-known/acme-challenge
+          echo "TEST" > certbot/www/.well-known/acme-challenge/test.txt
+          curl -s http://neureal.site/.well-known/acme-challenge/test.txt || echo "ACME challenge access failed"
+          
+          # Obtener certificados con modo detallado
+          docker-compose run --rm certbot certonly --webroot \
+            --webroot-path /var/www/certbot \
+            -d neureal.site -d www.neureal.site \
+            --email ${{ secrets.CERTBOT_EMAIL }} \
+            --agree-tos --non-interactive --force-renewal \
+            --verbose
+          
+          # Verificar que los certificados se crearon
+          if [ ! -f "certbot/conf/live/neureal.site/fullchain.pem" ]; then
+            echo "❌ SSL certificate generation failed"
+            echo "=== Certbot logs ==="
+            docker-compose logs certbot || true
+            echo "=== Last 50 lines of syslog ==="
+            tail -n 50 /var/log/syslog || true
+            exit 1
           fi
+          
+          echo "✅ SSL certificates generated successfully"
           
           # Iniciar certbot en modo renovación
           docker-compose up -d --no-deps certbot
@@ -161,27 +177,7 @@ jobs:
           sleep 5
           SSL_EOF
 
-      - name: Verify certificates
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'CERT_EOF'
-          set -e
-          cd /opt/neureal
-          
-          # Verificar que los certificados existen
-          if [ ! -f "certbot/conf/live/neureal.site/fullchain.pem" ]; then
-            echo "❌ SSL certificate not found at certbot/conf/live/neureal.site/fullchain.pem"
-            echo "=== Directory structure ==="
-            tree certbot/conf || ls -laR certbot/conf
-            exit 1
-          fi
-          
-          # Verificar permisos
-          echo "🔒 Certificate permissions:"
-          ls -la certbot/conf/live/neureal.site/
-          CERT_EOF
-
-      - name: Update Nginx configuration
+      - name: Configure Nginx with SSL
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_CONF_EOF'
@@ -194,73 +190,24 @@ jobs:
           
           # Verificar configuración
           docker run --rm -v $(pwd)/nginx/nginx.conf:/etc/nginx/nginx.conf nginx:alpine nginx -t
-          NGINX_CONF_EOF
-
-      - name: Start Nginx
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_START_EOF'
-          set -e
-          cd /opt/neureal
           
-          # Iniciar Nginx después de certificados
-          docker-compose up -d --no-deps nginx
-          
-          # Esperar y verificar estado
-          for i in {1..10}; do
-            container_id=$(docker-compose ps -q nginx)
-            status=$(docker inspect -f '{{.State.Status}}' "$container_id" 2>/dev/null || echo "unknown")
-            
-            if [ "$status" = "running" ]; then
-              echo "✅ Nginx is running"
-              break
-            else
-              echo "⚠️ Nginx status: $status (attempt $i)"
-              sleep 5
-            fi
-          done
-
-          # Verificar estado final
-          container_id=$(docker-compose ps -q nginx)
-          status=$(docker inspect -f '{{.State.Status}}' "$container_id" 2>/dev/null || echo "unknown")
-          
-          if [ "$status" != "running" ]; then
-            echo "❌ Nginx failed to start. Final status: $status"
-            echo "=== Nginx logs ==="
-            docker-compose logs nginx || true
-            exit 1
-          fi
-          NGINX_START_EOF
-
-      - name: Verify Nginx configuration
-        run: |
-          ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
-          set -e
-          cd /opt/neureal
-
-          # Verificar configuración dentro del contenedor
-          docker-compose exec -T nginx nginx -t
-          echo "✅ Nginx configuration test passed"
-          
-          # Recargar Nginx para aplicar cambios
+          # Recargar Nginx
           docker-compose exec -T nginx nginx -s reload
-          echo "🔁 Nginx reloaded successfully"
-          NGINX_EOF
+          NGINX_CONF_EOF
 
       - name: Run health check
         run: |
-          for i in {1..8}; do
+          for i in {1..10}; do
             status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
             if [ "$status" == "200" ]; then
               echo "✅ Health check passed with status 200"
               exit 0
             else
-              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 5s..."
-              sleep 5
+              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 10s..."
+              sleep 10
             fi
           done
-          echo "❌ Health check failed after 8 attempts"
+          echo "❌ Health check failed after 10 attempts"
           exit 1
 
       - name: Performance test
