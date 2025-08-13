@@ -160,41 +160,52 @@ jobs:
           set -e
           cd /opt/neureal
           
+          # Verificar configuración antes de iniciar
+          docker run --rm -v /opt/neureal/nginx/nginx.conf:/etc/nginx/nginx.conf nginx:alpine nginx -t
+          
           # Iniciar Nginx después de certificados
           docker-compose up -d --no-deps nginx
           
-          echo "⏳ Waiting for Nginx to start..."
-          sleep 10
+          # Esperar y verificar estado
+          for i in {1..10}; do
+            container_id=$(docker-compose ps -q nginx)
+            status=$(docker inspect -f '{{.State.Status}}' "$container_id" 2>/dev/null || echo "unknown")
+            
+            if [ "$status" = "running" ]; then
+              echo "✅ Nginx is running"
+              break
+            elif [ "$status" = "restarting" ]; then
+              echo "🔄 Nginx is restarting (attempt $i), checking logs..."
+              docker-compose logs nginx || true
+              sleep 5
+            else
+              echo "⚠️ Nginx status: $status (attempt $i)"
+              sleep 5
+            fi
+          done
+
+          # Verificar estado final
+          container_id=$(docker-compose ps -q nginx)
+          status=$(docker inspect -f '{{.State.Status}}' "$container_id" 2>/dev/null || echo "unknown")
+          
+          if [ "$status" != "running" ]; then
+            echo "❌ Nginx failed to start. Final status: $status"
+            echo "=== Nginx logs ==="
+            docker-compose logs nginx || true
+            exit 1
+          fi
           NGINX_START_EOF
 
-      - name: Verify & reload Nginx
+      - name: Verify Nginx configuration
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
           set -e
           cd /opt/neureal
 
-          # Verificar que nginx.conf existe
-          if [ ! -f "nginx/nginx.conf" ]; then
-            echo "❌ nginx.conf not found!"
-            exit 1
-          fi
-
-          # Verificar configuración de Nginx
-          for i in {1..5}; do
-            if docker-compose exec -T nginx nginx -t; then
-              echo "✅ Nginx configuration test passed"
-              docker-compose exec -T nginx nginx -s reload
-              echo "🔁 Nginx reloaded successfully"
-              exit 0
-            else
-              echo "⚠️ Attempt $i: Nginx configuration test failed, retrying in 5s..."
-              sleep 5
-            fi
-          done
-
-          echo "❌ Nginx failed to start after multiple attempts"
-          exit 1
+          # Verificar configuración dentro del contenedor
+          docker-compose exec -T nginx nginx -t
+          echo "✅ Nginx configuration test passed"
           NGINX_EOF
 
       - name: Run health check
