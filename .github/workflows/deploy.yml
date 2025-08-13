@@ -61,6 +61,11 @@ jobs:
           set -e
           set -x
 
+          # Detener y deshabilitar Nginx/Apache del sistema
+          sudo systemctl stop nginx apache2 || true
+          sudo systemctl disable nginx apache2 || true
+          sudo pkill -9 nginx || true
+
           cd /opt/neureal
 
           git fetch origin
@@ -71,25 +76,36 @@ jobs:
             cp apps/backend/.env.backup apps/backend/.env
           fi
 
-          if [ ! -f nginx/nginx.conf ]; then
-            echo "❌ nginx.conf not found in /opt/neureal/nginx/nginx.conf"
-            exit 1
-          fi
+          # Limpiar contenedores antiguos
+          docker-compose down --remove-orphans
 
+          # Construir imágenes
           docker-compose build --no-cache --pull backend frontend nginx
 
-          echo "🔄 Restarting backend..."
-          docker-compose up -d --force-recreate --no-deps backend
-
-          echo "🔄 Restarting frontend..."
-          docker-compose up -d --force-recreate --no-deps frontend
-
-          echo "🔄 Restarting nginx..."
-          docker-compose up -d --force-recreate nginx
+          # Iniciar todos los servicios
+          docker-compose up -d
 
           echo "⏳ Waiting for services to be ready..."
           sleep 15
           EOF
+
+      - name: Renew SSL certificates
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'CERTBOT_EOF'
+          set -e
+          
+          cd /opt/neureal
+          
+          # Verificar si los certificados necesitan renovación
+          docker-compose run --rm certbot renew --dry-run
+          
+          # Renovar certificados reales
+          docker-compose run --rm certbot renew
+          
+          # Recargar Nginx para aplicar nuevos certificados
+          docker-compose exec nginx nginx -s reload
+          CERTBOT_EOF
 
       - name: Verify & reload Nginx
         run: |
@@ -163,7 +179,11 @@ jobs:
           cd apps/backend
           cp .env.backup .env || echo "Using existing .env"
 
-          docker-compose up -d --force-recreate
+          # Detener servicios conflictivos
+          sudo systemctl stop nginx apache2 || true
+          
+          docker-compose down --remove-orphans
+          docker-compose up -d
 
           echo "🔙 Rollback completed successfully!"
           ROLLBACK_EOF
