@@ -50,17 +50,15 @@ services:
       - neureal-net
     restart: unless-stopped
 
-  services:
   certbot:
     image: certbot/certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     command: sh -c "while true; do sleep 12h; certbot renew; done;"
-    restart: unless-stopped
     networks:
       - neureal-net
-    restart: unless-stopped
+    # SE ELIMINÓ LA LÍNEA DUPLICADA restart: unless-stopped
 
 networks:
   neureal-net:

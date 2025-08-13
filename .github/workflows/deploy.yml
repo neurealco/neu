@@ -88,6 +88,13 @@ jobs:
           git fetch origin
           git reset --hard origin/main
 
+          # Corregir docker-compose.yml si es necesario
+          if grep -A5 'certbot:' docker-compose.yml | grep -q 'restart:.*restart:'; then
+            echo "🔧 Fixing duplicate restart in docker-compose.yml"
+            sed -i '/^  certbot:/,/^  [a-z]/ {/restart: unless-stopped/d}' docker-compose.yml
+            echo "    restart: unless-stopped" >> docker-compose.yml
+          fi
+
           # Restaurar .env si existía
           if [ -f apps/backend/.env.tmp ]; then
             echo "🔄 Restoring .env from temporary backup"
