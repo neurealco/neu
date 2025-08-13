@@ -11,6 +11,12 @@ const routes_1 = __importDefault(require("./routes"));
 const error_middleware_1 = require("./middleware/error.middleware");
 const rateLimit_util_1 = require("./utils/rateLimit.util");
 const app = (0, express_1.default)();
+// Solución 1: Usar una sintaxis alternativa para cookie-parser
+const cookieParser = cookie_parser_1.default;
+app.use(cookieParser());
+// Solución 2: Usar require en lugar de import
+// const cookieParser = require('cookie-parser');
+// app.use(cookieParser());
 app.use((0, cors_1.default)({
     origin: config_1.default.SITE_URL,
     credentials: true,
@@ -18,10 +24,7 @@ app.use((0, cors_1.default)({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express_1.default.json());
-app.use((req, res, next) => {
-    return (0, cookie_parser_1.default)()(req, res, next);
-});
-// Agrega esto después de app.use(cookieParser());
+// Health check
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "UP",
@@ -29,11 +32,31 @@ app.get("/health", (req, res) => {
     });
 });
 app.use((0, rateLimit_util_1.rateLimitMiddleware)(rateLimit_util_1.apiRateLimiter));
-// Routes
+// Ruta de prueba
 app.get("/api/test", (req, res) => {
     res.json({ status: "Backend working", time: new Date() });
 });
+// Montar rutas principales
 app.use("/api", routes_1.default);
 // Error handling
 app.use(error_middleware_1.errorHandler);
+function printRoutes(layer, prefix = "") {
+    if (layer.route) {
+        const methods = Object.keys(layer.route.methods).join(", ").toUpperCase();
+        console.log(`[ROUTE] ${methods} ${prefix}${layer.route.path}`);
+    }
+    else if (layer.name === "router" && layer.handle.stack) {
+        const newPrefix = prefix + (layer.regexp.source
+            .replace("\\/", "/")
+            .replace("(?=\\/|$)", "")
+            .replace("/^", "")
+            .replace("\\/?(?=/|$)", ""));
+        layer.handle.stack.forEach((sublayer) => {
+            printRoutes(sublayer, newPrefix);
+        });
+    }
+}
+console.log("===== RUTAS REGISTRADAS =====");
+app._router.stack.forEach((layer) => printRoutes(layer));
+console.log("==============================");
 exports.default = app;
