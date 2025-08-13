@@ -13,6 +13,7 @@ router.get("/health", (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+router.use("/auth", auth_routes_1.authRoutes); // ✅ Esta línea es crucial
 // Rutas públicas
 router.use("/api/auth", auth_routes_1.authRoutes);
 // Rutas protegidas

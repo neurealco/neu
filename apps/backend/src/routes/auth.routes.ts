@@ -15,4 +15,4 @@ router.post("/logout", logout);
 router.get("/google", startAuth);
 
 // Exportar como objeto nombrado
-export const authRoutes = router;
+export { router as authRoutes }; // Exportación nombrada

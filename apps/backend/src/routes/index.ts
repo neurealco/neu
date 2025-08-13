@@ -14,6 +14,7 @@ router.get("/health", (req, res) => {
   });
 });
 
+router.use("/auth", authRoutes); // ✅ Esta línea es crucial
 // Rutas públicas
 router.use("/api/auth", authRoutes);
 
