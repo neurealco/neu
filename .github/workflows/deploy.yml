@@ -108,7 +108,7 @@ jobs:
           # Construir imágenes
           docker-compose build --no-cache --pull backend frontend nginx
 
-          # Iniciar todos los servicios EXCEPTO certbot
+          # Iniciar servicios principales
           docker-compose up -d frontend backend redis nginx
 
           echo "⏳ Waiting for services to be ready..."
@@ -129,23 +129,21 @@ jobs:
             # Crear directorios necesarios
             mkdir -p certbot/conf certbot/www
             
-            # Obtener certificados iniciales (sin esperar a Nginx)
+            # Obtener certificados iniciales
             docker-compose run --rm certbot certonly --webroot \
               --webroot-path /var/www/certbot \
               -d neureal.site -d www.neureal.site \
               --email ${{ secrets.CERTBOT_EMAIL }} \
               --agree-tos --non-interactive --force-renewal
-            
-            # Iniciar certbot en modo renovación
-            docker-compose up -d certbot
           else
             echo "✅ SSL certificates already exist"
-            # Solo iniciar certbot si no está corriendo
-            docker-compose up -d certbot || true
           fi
           
-          # Recargar Nginx para aplicar certificados
-          docker-compose exec -T nginx nginx -s reload
+          # Iniciar certbot en modo renovación (con política de reinicio)
+          docker-compose up -d --no-deps certbot
+          
+          # Esperar a que certbot se estabilice
+          sleep 5
           SSL_EOF
 
       - name: Verify & reload Nginx
@@ -154,12 +152,18 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
           set -e
 
-          # Configuración de Nginx optimizada
-          docker-compose exec -T nginx nginx -t
-          echo "✅ Nginx configuration test passed"
-          
-          docker-compose exec -T nginx nginx -s reload
-          echo "🔁 Nginx reloaded successfully"
+          # Esperar a que Nginx esté listo
+          for i in {1..5}; do
+            if docker-compose exec -T nginx nginx -t; then
+              echo "✅ Nginx configuration test passed"
+              docker-compose exec -T nginx nginx -s reload
+              echo "🔁 Nginx reloaded successfully"
+              break
+            else
+              echo "⚠️ Attempt $i: Nginx not ready, retrying in 5s..."
+              sleep 5
+            fi
+          done
           NGINX_EOF
 
       - name: Run health check
