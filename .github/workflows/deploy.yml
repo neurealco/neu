@@ -102,20 +102,37 @@ jobs:
           docker-compose up -d
 
           echo "⏳ Waiting for services to be ready..."
-          sleep 15
+          sleep 10  # Reducido de 15 a 10 segundos
           EOF
 
-      - name: Renew SSL certificates
+      - name: Configure SSL certificates
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'CERTBOT_EOF'
           set -e
           cd /opt/neureal
           
-          # Renovar certificados si es necesario
-          docker-compose run --rm certbot renew --quiet
+          # Verificar si ya existen certificados
+          if [ ! -d "letsencrypt/live/neureal.site" ]; then
+            echo "🔐 Initial SSL certificate setup"
+            # Crear directorio para desafíos ACME
+            mkdir -p certbot/www
+            
+            # Iniciar nginx temporal para desafíos ACME
+            docker-compose up -d nginx
+            
+            # Obtener certificados iniciales
+            docker-compose run --rm certbot certonly --webroot \
+              --webroot-path /var/www/certbot \
+              -d neureal.site -d www.neureal.site \
+              --email ${{ secrets.CERTBOT_EMAIL }} \
+              --agree-tos --non-interactive
+          fi
           
-          # Recargar Nginx para aplicar nuevos certificados
+          # Renovar certificados solo si es necesario (más rápido)
+          docker-compose run --rm certbot renew --quiet --no-random-sleep-on-renew
+          
+          # Recargar Nginx para aplicar certificados
           docker-compose exec nginx nginx -s reload || true
           CERTBOT_EOF
 
@@ -125,35 +142,27 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
           set -e
 
-          for i in {1..5}; do
-            if docker-compose exec -T nginx nginx -t; then
-              echo "✅ Nginx configuration test passed"
-              docker-compose exec -T nginx nginx -s reload
-              echo "🔁 Nginx reloaded successfully"
-              exit 0
-            else
-              echo "⚠️ Attempt $i: Nginx not ready, retrying in 5s..."
-              sleep 5
-            fi
-          done
-
-          echo "❌ Nginx failed to start after multiple attempts"
-          exit 1
+          # Configuración de Nginx optimizada
+          docker-compose exec -T nginx nginx -t
+          echo "✅ Nginx configuration test passed"
+          
+          docker-compose exec -T nginx nginx -s reload
+          echo "🔁 Nginx reloaded successfully"
           NGINX_EOF
 
       - name: Run health check
         run: |
-          for i in {1..10}; do
+          for i in {1..8}; do  # Reducido de 10 a 8 intentos
             status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
             if [ "$status" == "200" ]; then
               echo "✅ Health check passed with status 200"
               exit 0
             else
-              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 10s..."
-              sleep 10
+              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 5s..."  # Reducido de 10 a 5 segundos
+              sleep 5
             fi
           done
-          echo "❌ Health check failed after 10 attempts"
+          echo "❌ Health check failed after 8 attempts"
           exit 1
 
       - name: Performance test
