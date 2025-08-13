@@ -8,6 +8,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Certbot email
+        run: |
+          if [ -z "${{ secrets.CERTBOT_EMAIL }}" ]; then
+            echo "::error::CERTBOT_EMAIL secret is not set"
+            exit 1
+          fi
+          echo "✅ CERTBOT_EMAIL is set"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -45,8 +53,10 @@ jobs:
           # Limpiar directorios de certificados previos
           rm -rf certbot/conf/*
           
-          # Verificar si se necesitan certificados SSL
-          export SSL_CERTS_EXIST=$(test -d "certbot/conf/live/neureal.site" && echo "1" || echo "0")
+          # Verificar puertos
+          echo "🔄 Checking ports 80 and 443"
+          sudo lsof -i :80 || echo "Port 80 free"
+          sudo lsof -i :443 || echo "Port 443 free"
           PRE_EOF
 
       - name: Ensure .env exists
@@ -128,11 +138,26 @@ jobs:
           # Crear directorios necesarios
           mkdir -p certbot/conf certbot/www
           
-          # Configurar Nginx para desafíos ACME
+          # Iniciar solo nginx para desafíos ACME
           docker-compose up -d nginx
           
           # Esperar a que Nginx esté listo
-          sleep 5
+          for i in {1..10}; do
+            if docker-compose exec -T nginx curl -s -o /dev/null http://localhost; then
+              echo "✅ Nginx is ready"
+              break
+            else
+              echo "⚠️ Waiting for Nginx to start (attempt $i)"
+              sleep 5
+            fi
+          done
+
+          # Verificar acceso ACME
+          mkdir -p certbot/www/.well-known/acme-challenge
+          echo "TEST" > certbot/www/.well-known/acme-challenge/test.txt
+          PUBLIC_IP=$(curl -s ifconfig.me)
+          echo "🌐 Testing ACME challenge at http://$PUBLIC_IP/.well-known/acme-challenge/test.txt"
+          curl -v --retry 3 --retry-delay 5 http://$PUBLIC_IP/.well-known/acme-challenge/test.txt || true
           PREP_SSL_EOF
 
       - name: Handle SSL certificates
@@ -142,19 +167,19 @@ jobs:
           set -e
           cd /opt/neureal
           
-          echo "🔐 Initial SSL certificate setup"
+          EMAIL="${{ secrets.CERTBOT_EMAIL }}"
+          if [ -z "$EMAIL" ]; then
+            echo "❌ CERTBOT_EMAIL is not set"
+            exit 1
+          fi
           
-          # Verificar acceso a desafíos ACME
-          echo "🌐 Testing ACME challenge access"
-          mkdir -p certbot/www/.well-known/acme-challenge
-          echo "TEST" > certbot/www/.well-known/acme-challenge/test.txt
-          curl -s http://neureal.site/.well-known/acme-challenge/test.txt || echo "ACME challenge access failed"
+          echo "🔐 Initial SSL certificate setup with email: $EMAIL"
           
           # Obtener certificados con modo detallado
           docker-compose run --rm certbot certonly --webroot \
             --webroot-path /var/www/certbot \
             -d neureal.site -d www.neureal.site \
-            --email ${{ secrets.CERTBOT_EMAIL }} \
+            --email "$EMAIL" \
             --agree-tos --non-interactive --force-renewal \
             --verbose
           
@@ -163,8 +188,8 @@ jobs:
             echo "❌ SSL certificate generation failed"
             echo "=== Certbot logs ==="
             docker-compose logs certbot || true
-            echo "=== Last 50 lines of syslog ==="
-            tail -n 50 /var/log/syslog || true
+            echo "=== Nginx access logs ==="
+            docker-compose exec -T nginx tail -n 50 /var/log/nginx/access.log || true
             exit 1
           fi
           
@@ -172,9 +197,6 @@ jobs:
           
           # Iniciar certbot en modo renovación
           docker-compose up -d --no-deps certbot
-          
-          # Esperar a que certbot se estabilice
-          sleep 5
           SSL_EOF
 
       - name: Configure Nginx with SSL
@@ -188,17 +210,29 @@ jobs:
           sed -i 's|ssl_certificate .*|ssl_certificate /etc/letsencrypt/live/neureal.site/fullchain.pem;|' nginx/nginx.conf
           sed -i 's|ssl_certificate_key .*|ssl_certificate_key /etc/letsencrypt/live/neureal.site/privkey.pem;|' nginx/nginx.conf
           
-          # Verificar configuración
-          docker run --rm -v $(pwd)/nginx/nginx.conf:/etc/nginx/nginx.conf nginx:alpine nginx -t
-          
-          # Recargar Nginx
+          # Recargar Nginx para aplicar certificados
           docker-compose exec -T nginx nginx -s reload
           NGINX_CONF_EOF
+
+      - name: Verify Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'NGINX_EOF'
+          set -e
+          cd /opt/neureal
+          
+          # Verificar configuración
+          docker-compose exec -T nginx nginx -t
+          
+          # Verificar estado SSL
+          echo "🔒 Testing SSL connection"
+          curl -Isk https://neureal.site | grep "HTTP" || true
+          NGINX_EOF
 
       - name: Run health check
         run: |
           for i in {1..10}; do
-            status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
+            status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site || echo "000")
             if [ "$status" == "200" ]; then
               echo "✅ Health check passed with status 200"
               exit 0
