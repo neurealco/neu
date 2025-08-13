@@ -1,4 +1,4 @@
-FROM node:18-bookworm
+FROM node:18.20.8-bookworm
 
 # 1. Instalar dependencias globales
 RUN apt-get update && apt-get install -y python3 make g++ git
