@@ -37,7 +37,6 @@ jobs:
           set -e
           cd /opt/neureal/apps/backend
 
-          # Crear .env solo si no existe
           if [ ! -f .env ]; then
             echo "⚠️ .env file missing, creating new one..."
             touch .env
@@ -53,6 +52,22 @@ jobs:
           fi
           ENV_EOF
 
+      - name: Pre-deploy setup
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'PRE_EOF'
+          set -e
+          cd /opt/neureal
+          
+          # Detener y deshabilitar servicios conflictivos
+          sudo systemctl stop nginx apache2 || true
+          sudo systemctl disable nginx apache2 || true
+          sudo pkill -9 nginx || true
+          
+          # Verificar si se necesitan certificados SSL
+          export SSL_CERTS_EXIST=$(test -d "certbot/conf/live/neureal.site" && echo "1" || echo "0")
+          PRE_EOF
+
       - name: Deploy application
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
@@ -60,11 +75,6 @@ jobs:
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           set -e
           set -x
-
-          # Detener y deshabilitar servicios conflictivos
-          sudo systemctl stop nginx apache2 || true
-          sudo systemctl disable nginx apache2 || true
-          sudo pkill -9 nginx || true
 
           cd /opt/neureal
 
@@ -98,43 +108,45 @@ jobs:
           # Construir imágenes
           docker-compose build --no-cache --pull backend frontend nginx
 
-          # Iniciar todos los servicios
-          docker-compose up -d
+          # Iniciar todos los servicios EXCEPTO certbot
+          docker-compose up -d frontend backend redis nginx
 
           echo "⏳ Waiting for services to be ready..."
-          sleep 10  # Reducido de 15 a 10 segundos
+          sleep 10
           EOF
 
-      - name: Configure SSL certificates
+      - name: Handle SSL certificates
         run: |
           ssh -o StrictHostKeyChecking=accept-new \
-              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'CERTBOT_EOF'
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'SSL_EOF'
           set -e
           cd /opt/neureal
           
-          # Verificar si ya existen certificados
-          if [ ! -d "letsencrypt/live/neureal.site" ]; then
+          # Solo configurar SSL si no existe
+          if [ "$SSL_CERTS_EXIST" = "0" ]; then
             echo "🔐 Initial SSL certificate setup"
-            # Crear directorio para desafíos ACME
-            mkdir -p certbot/www
             
-            # Iniciar nginx temporal para desafíos ACME
-            docker-compose up -d nginx
+            # Crear directorios necesarios
+            mkdir -p certbot/conf certbot/www
             
-            # Obtener certificados iniciales
+            # Obtener certificados iniciales (sin esperar a Nginx)
             docker-compose run --rm certbot certonly --webroot \
               --webroot-path /var/www/certbot \
               -d neureal.site -d www.neureal.site \
               --email ${{ secrets.CERTBOT_EMAIL }} \
-              --agree-tos --non-interactive
+              --agree-tos --non-interactive --force-renewal
+            
+            # Iniciar certbot en modo renovación
+            docker-compose up -d certbot
+          else
+            echo "✅ SSL certificates already exist"
+            # Solo iniciar certbot si no está corriendo
+            docker-compose up -d certbot || true
           fi
           
-          # Renovar certificados solo si es necesario (más rápido)
-          docker-compose run --rm certbot renew --quiet --no-random-sleep-on-renew
-          
           # Recargar Nginx para aplicar certificados
-          docker-compose exec nginx nginx -s reload || true
-          CERTBOT_EOF
+          docker-compose exec -T nginx nginx -s reload
+          SSL_EOF
 
       - name: Verify & reload Nginx
         run: |
@@ -152,13 +164,13 @@ jobs:
 
       - name: Run health check
         run: |
-          for i in {1..8}; do  # Reducido de 10 a 8 intentos
+          for i in {1..8}; do
             status=$(curl -s -o /dev/null -w "%{http_code}" https://neureal.site)
             if [ "$status" == "200" ]; then
               echo "✅ Health check passed with status 200"
               exit 0
             else
-              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 5s..."  # Reducido de 10 a 5 segundos
+              echo "⚠️ Attempt $i: Health check failed (Status: $status). Retrying in 5s..."
               sleep 5
             fi
           done
