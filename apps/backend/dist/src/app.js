@@ -15,15 +15,15 @@ const _config = /*#__PURE__*/ _interop_require_default(require("./config"));
 const _routes = /*#__PURE__*/ _interop_require_default(require("./routes"));
 const _errormiddleware = require("./middleware/error.middleware");
 const _loggerutil = /*#__PURE__*/ _interop_require_default(require("./utils/logger.util"));
+const _url = require("url");
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj
     };
 }
 const app = (0, _express.default)();
-// Solución para cookie-parser
-const cookieParser = _cookieparser.default;
-app.use(cookieParser());
+// Middlewares básicos - Solución para cookie-parser
+app.use((0, _cookieparser.default)());
 app.use((0, _cors.default)({
     origin: _config.default.SITE_URL,
     credentials: true,
@@ -41,14 +41,10 @@ app.use((0, _cors.default)({
 app.use(_express.default.json());
 // Middleware de diagnóstico de solicitudes
 app.use((req, res, next)=>{
-    _loggerutil.default.http(`${req.method} ${req.originalUrl}`, {
-        ip: req.ip,
-        headers: req.headers,
-        cookies: req.cookies
-    });
+    _loggerutil.default.info(`🌐 Solicitud recibida: ${req.method} ${req.originalUrl}`);
     next();
 });
-// Health check
+// Health check mejorado
 app.get("/health", (req, res)=>{
     _loggerutil.default.info("🩺 Health check passed");
     res.status(200).json({
@@ -57,32 +53,60 @@ app.get("/health", (req, res)=>{
         version: "1.0.0"
     });
 });
-// Montar rutas principales
-app.use("/api", _routes.default);
-// Middleware de error
-app.use(_errormiddleware.errorHandler);
-// ===== DIAGNÓSTICO DE RUTAS CORREGIDO =====
-function printRoutes(layer, prefix = "", depth = 0) {
-    const indent = "  ".repeat(depth);
-    if (layer.route) {
-        const methods = Object.keys(layer.route.methods).join(", ").toUpperCase();
-        _loggerutil.default.debug(`${indent}[ROUTE] ${methods} ${prefix}${layer.route.path}`);
-    } else if (layer.name === "router" && layer.handle.stack) {
-        // Expresión regular simplificada y corregida
-        const regexStr = layer.regexp.toString().replace(/^\/\^/, "").replace(/\\\//g, "/").replace(/\(\?=\\\/\|\$\)\//, "").replace(/\/i$/, "");
-        const newPrefix = prefix + regexStr;
-        _loggerutil.default.debug(`${indent}[ROUTER] ${newPrefix}`);
-        layer.handle.stack.forEach((sublayer)=>{
-            printRoutes(sublayer, newPrefix, depth + 1);
+// Solución definitiva para /api/auth/google
+app.get("/api/auth/google", (req, res)=>{
+    try {
+        _loggerutil.default.info("✅ SOLUCIÓN DIRECTA: /api/auth/google accedida");
+        // Construir URL de autenticación manualmente
+        const authUrl = new _url.URL("https://accounts.google.com/o/oauth2/v2/auth");
+        authUrl.searchParams.append("client_id", _config.default.GOOGLE_CLIENT_ID);
+        authUrl.searchParams.append("redirect_uri", `${_config.default.SITE_URL}/api/auth/callback`);
+        authUrl.searchParams.append("response_type", "code");
+        authUrl.searchParams.append("scope", [
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/youtube.readonly"
+        ].join(" "));
+        authUrl.searchParams.append("access_type", "offline");
+        authUrl.searchParams.append("prompt", "consent");
+        _loggerutil.default.debug(`🔗 URL de autenticación generada: ${authUrl.toString()}`);
+        res.redirect(authUrl.toString());
+    } catch (error) {
+        const err = error;
+        _loggerutil.default.error(`🔥 Error en solución directa: ${err.message}`, {
+            stack: err.stack
         });
-    } else if (layer.name) {
-        _loggerutil.default.debug(`${indent}[MIDDLEWARE] ${layer.name}`);
+        res.status(500).json({
+            error: "Authentication failed"
+        });
     }
-}
-// Diagnóstico después de inicializar
+});
+// Montar rutas principales
+app.use("/api", _routes.default); // Conversión explícita
+// Ruta de diagnóstico del sistema
+app.get("/api/system/debug", (req, res)=>{
+    const routes = app._router.stack.filter((layer)=>layer.route).map((layer)=>({
+            path: layer.route.path,
+            methods: Object.keys(layer.route.methods)
+        }));
+    res.json({
+        node: process.version,
+        environment: _config.default.NODE_ENV,
+        routes: routes,
+        time: new Date().toISOString()
+    });
+});
+// Middleware de errores
+app.use(_errormiddleware.errorHandler);
+// Diagnóstico de rutas al iniciar
 app.on("mount", ()=>{
-    _loggerutil.default.info("===== INICIO DE DIAGNÓSTICO DE RUTAS =====");
-    app._router.stack.forEach((layer)=>printRoutes(layer));
-    _loggerutil.default.info("===== FIN DE DIAGNÓSTICO DE RUTAS =====");
+    _loggerutil.default.info("🚀 Aplicación iniciada");
+    const routes = app._router.stack.filter((layer)=>layer.route).map((layer)=>({
+            path: layer.route.path,
+            methods: Object.keys(layer.route.methods)
+        }));
+    _loggerutil.default.info("📋 Rutas registradas:", {
+        routes
+    });
 });
 const _default = app;
