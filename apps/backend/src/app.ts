@@ -10,7 +10,7 @@ import { URL } from "url";
 const app = express();
 
 // Middlewares básicos - Solución para cookie-parser
-app.use(cookieParser() as RequestHandler); // Conversión explícita a RequestHandler
+app.use(cookieParser() as unknown as import("express").RequestHandler);
 
 app.use(cors({
   origin: config.SITE_URL,
