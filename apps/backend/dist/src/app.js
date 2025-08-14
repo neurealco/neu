@@ -14,7 +14,6 @@ const _cookieparser = /*#__PURE__*/ _interop_require_default(require("cookie-par
 const _config = /*#__PURE__*/ _interop_require_default(require("./config"));
 const _routes = /*#__PURE__*/ _interop_require_default(require("./routes"));
 const _errormiddleware = require("./middleware/error.middleware");
-const _rateLimitutil = require("./utils/rateLimit.util");
 const _loggerutil = /*#__PURE__*/ _interop_require_default(require("./utils/logger.util"));
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
@@ -40,7 +39,7 @@ app.use((0, _cors.default)({
     ]
 }));
 app.use(_express.default.json());
-// Middleware de diagnóstico
+// Middleware de diagnóstico de solicitudes
 app.use((req, res, next)=>{
     _loggerutil.default.http(`${req.method} ${req.originalUrl}`, {
         ip: req.ip,
@@ -49,7 +48,7 @@ app.use((req, res, next)=>{
     });
     next();
 });
-// Health check con diagnóstico
+// Health check
 app.get("/health", (req, res)=>{
     _loggerutil.default.info("🩺 Health check passed");
     res.status(200).json({
@@ -58,26 +57,26 @@ app.get("/health", (req, res)=>{
         version: "1.0.0"
     });
 });
-// Middleware de rate limiting
-app.use((0, _rateLimitutil.rateLimitMiddleware)(_rateLimitutil.apiRateLimiter));
 // Montar rutas principales
 app.use("/api", _routes.default);
 // Middleware de error
 app.use(_errormiddleware.errorHandler);
-// ===== DIAGNÓSTICO COMPLETO DE RUTAS =====
+// ===== DIAGNÓSTICO DE RUTAS CORREGIDO =====
 function printRoutes(layer, prefix = "", depth = 0) {
     const indent = "  ".repeat(depth);
     if (layer.route) {
         const methods = Object.keys(layer.route.methods).join(", ").toUpperCase();
         _loggerutil.default.debug(`${indent}[ROUTE] ${methods} ${prefix}${layer.route.path}`);
     } else if (layer.name === "router" && layer.handle.stack) {
-        const newPrefix = prefix + layer.regexp.source.replace("\\/?", "").replace("(?=\\/|$)", "").replace("^\\", "").replace("\\/?(?=/|$)", "");
+        // Expresión regular simplificada y corregida
+        const regexStr = layer.regexp.toString().replace(/^\/\^/, "").replace(/\\\//g, "/").replace(/\(\?=\\\/\|\$\)\//, "").replace(/\/i$/, "");
+        const newPrefix = prefix + regexStr;
         _loggerutil.default.debug(`${indent}[ROUTER] ${newPrefix}`);
         layer.handle.stack.forEach((sublayer)=>{
             printRoutes(sublayer, newPrefix, depth + 1);
         });
     } else if (layer.name) {
-        _loggerutil.default.debug(`${indent}[MIDDLEWARE] ${layer.name} (${layer.handle.length})`);
+        _loggerutil.default.debug(`${indent}[MIDDLEWARE] ${layer.name}`);
     }
 }
 // Diagnóstico después de inicializar

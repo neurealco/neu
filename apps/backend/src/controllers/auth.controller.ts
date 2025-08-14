@@ -1,18 +1,29 @@
 import { Request, Response } from "express";
-import { getAuthUrl, handleCallback } from "../services/auth.service";
+import { handleCallback } from "../services/auth.service";
 import jwt from "jsonwebtoken";
 import config from "../config";
 import logger from "../utils/logger.util";
+import { URL } from "url";
 
 export const startAuth = (req: Request, res: Response) => {
   try {
-    // Log de diagnóstico
     logger.info("✅ /auth/google route hit!");
-    
-    const url = getAuthUrl();
-    logger.debug(`Generated auth URL: ${url}`);
-    
-    res.redirect(url);
+
+    // Construir URL de autenticación manualmente
+    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authUrl.searchParams.append("client_id", config.GOOGLE_CLIENT_ID);
+    authUrl.searchParams.append("redirect_uri", `${config.SITE_URL}/api/auth/callback`);
+    authUrl.searchParams.append("response_type", "code");
+    authUrl.searchParams.append("scope", [
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/youtube.readonly"
+    ].join(" "));
+    authUrl.searchParams.append("access_type", "offline");
+    authUrl.searchParams.append("prompt", "consent");
+
+    logger.debug(`Generated auth URL: ${authUrl.toString()}`);
+    res.redirect(authUrl.toString());
   } catch (error) {
     const err = error as Error;
     logger.error(`🔥 Auth start failed: ${err.message}`, { stack: err.stack });

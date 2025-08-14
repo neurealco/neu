@@ -4,7 +4,6 @@ import cookieParserLib from "cookie-parser";
 import config from "./config";
 import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
-import { apiRateLimiter, rateLimitMiddleware } from "./utils/rateLimit.util";
 import logger from "./utils/logger.util";
 
 const app = express();
@@ -23,7 +22,7 @@ app.use(
 );
 app.use(express.json());
 
-// Middleware de diagnóstico
+// Middleware de diagnóstico de solicitudes
 app.use((req, res, next) => {
   logger.http(`${req.method} ${req.originalUrl}`, {
     ip: req.ip,
@@ -33,7 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check con diagnóstico
+// Health check
 app.get("/health", (req, res) => {
   logger.info("🩺 Health check passed");
   res.status(200).json({
@@ -43,16 +42,13 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Middleware de rate limiting
-app.use(rateLimitMiddleware(apiRateLimiter));
-
 // Montar rutas principales
 app.use("/api", routes);
 
 // Middleware de error
 app.use(errorHandler);
 
-// ===== DIAGNÓSTICO COMPLETO DE RUTAS =====
+// ===== DIAGNÓSTICO DE RUTAS CORREGIDO =====
 function printRoutes(layer: any, prefix: string = "", depth: number = 0): void {
   const indent = "  ".repeat(depth);
   
@@ -60,11 +56,14 @@ function printRoutes(layer: any, prefix: string = "", depth: number = 0): void {
     const methods = Object.keys(layer.route.methods).join(", ").toUpperCase();
     logger.debug(`${indent}[ROUTE] ${methods} ${prefix}${layer.route.path}`);
   } else if (layer.name === "router" && layer.handle.stack) {
-    const newPrefix = prefix + (layer.regexp.source
-      .replace("\\/?", "")
-      .replace("(?=\\/|$)", "")
-      .replace("^\\", "")
-      .replace("\\/?(?=/|$)", ""));
+    // Expresión regular simplificada y corregida
+    const regexStr = layer.regexp.toString()
+      .replace(/^\/\^/, "")
+      .replace(/\\\//g, "/")
+      .replace(/\(\?=\\\/\|\$\)\//, "")
+      .replace(/\/i$/, "");
+
+    const newPrefix = prefix + regexStr;
     
     logger.debug(`${indent}[ROUTER] ${newPrefix}`);
     
@@ -72,7 +71,7 @@ function printRoutes(layer: any, prefix: string = "", depth: number = 0): void {
       printRoutes(sublayer, newPrefix, depth + 1);
     });
   } else if (layer.name) {
-    logger.debug(`${indent}[MIDDLEWARE] ${layer.name} (${layer.handle.length})`);
+    logger.debug(`${indent}[MIDDLEWARE] ${layer.name}`);
   }
 }
 

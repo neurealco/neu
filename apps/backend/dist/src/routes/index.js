@@ -9,33 +9,78 @@ Object.defineProperty(exports, "default", {
     }
 });
 const _express = require("express");
-const _authroutes = /*#__PURE__*/ _interop_require_default(require("./auth.routes"));
-const _dashboardroutes = require("./dashboard.routes");
-const _subscriptionroutes = require("./subscription.routes");
 const _authmiddleware = require("../middleware/auth.middleware");
+const _loggerutil = /*#__PURE__*/ _interop_require_default(require("../utils/logger.util"));
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj
     };
 }
 const router = (0, _express.Router)();
-// Ruta de health check
+// Middleware de diagnóstico para todas las rutas
+router.use((req, res, next)=>{
+    _loggerutil.default.info(`📭 Route accessed: ${req.method} ${req.originalUrl}`);
+    next();
+});
+// Health check
 router.get("/health", (req, res)=>{
     res.status(200).json({
         status: "UP",
         timestamp: new Date().toISOString()
     });
 });
-// Rutas públicas
-router.use("/api/auth", _authroutes.default); // Única ruta para auth
-// Rutas protegidas
-router.use("/api/dashboard", _authmiddleware.authenticate, _dashboardroutes.dashboardRoutes);
-router.use("/api/subscription", _authmiddleware.authenticate, _subscriptionroutes.subscriptionRoutes);
+// Importar y montar authRoutes con diagnóstico
+try {
+    const authRoutes = require("./auth.routes").default;
+    router.use("/api/auth", authRoutes);
+    _loggerutil.default.info("✅ Auth routes mounted successfully");
+} catch (error) {
+    _loggerutil.default.error("🔥 Failed to mount auth routes", error);
+}
+// Importar y montar dashboardRoutes
+try {
+    const { dashboardRoutes } = require("./dashboard.routes");
+    router.use("/api/dashboard", _authmiddleware.authenticate, dashboardRoutes);
+    _loggerutil.default.info("✅ Dashboard routes mounted successfully");
+} catch (error) {
+    _loggerutil.default.error("🔥 Failed to mount dashboard routes", error);
+}
+// Importar y montar subscriptionRoutes
+try {
+    const { subscriptionRoutes } = require("./subscription.routes");
+    router.use("/api/subscription", subscriptionRoutes);
+    _loggerutil.default.info("✅ Subscription routes mounted successfully");
+} catch (error) {
+    _loggerutil.default.error("🔥 Failed to mount subscription routes", error);
+}
 // Ruta de prueba
 router.get("/api/test", (req, res)=>{
     res.json({
         status: "Backend working",
         time: new Date()
+    });
+});
+// Ruta de diagnóstico de rutas registradas
+router.get("/api/route-debug", (req, res)=>{
+    const routes = [];
+    // Función recursiva para recolectar rutas
+    const getRoutes = (layer, prefix = "")=>{
+        if (layer.route) {
+            const methods = Object.keys(layer.route.methods).map((method)=>method.toUpperCase());
+            routes.push({
+                method: methods.join(','),
+                path: `${prefix}${layer.route.path}`
+            });
+        } else if (layer.name === "router" && layer.handle.stack) {
+            const newPrefix = prefix + layer.regexp.source.replace("\\/?(?=\\/|$)", "").replace("^", "").replace("\\", "");
+            layer.handle.stack.forEach((sublayer)=>{
+                getRoutes(sublayer, newPrefix);
+            });
+        }
+    };
+    router.stack.forEach((layer)=>getRoutes(layer));
+    res.json({
+        routes
     });
 });
 const _default = router;

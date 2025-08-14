@@ -26,6 +26,7 @@ const _authservice = require("../services/auth.service");
 const _jsonwebtoken = /*#__PURE__*/ _interop_require_default(require("jsonwebtoken"));
 const _config = /*#__PURE__*/ _interop_require_default(require("../config"));
 const _loggerutil = /*#__PURE__*/ _interop_require_default(require("../utils/logger.util"));
+const _url = require("url");
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj
@@ -33,11 +34,21 @@ function _interop_require_default(obj) {
 }
 const startAuth = (req, res)=>{
     try {
-        // Log de diagnóstico
         _loggerutil.default.info("✅ /auth/google route hit!");
-        const url = (0, _authservice.getAuthUrl)();
-        _loggerutil.default.debug(`Generated auth URL: ${url}`);
-        res.redirect(url);
+        // Construir URL de autenticación manualmente
+        const authUrl = new _url.URL("https://accounts.google.com/o/oauth2/v2/auth");
+        authUrl.searchParams.append("client_id", _config.default.GOOGLE_CLIENT_ID);
+        authUrl.searchParams.append("redirect_uri", `${_config.default.SITE_URL}/api/auth/callback`);
+        authUrl.searchParams.append("response_type", "code");
+        authUrl.searchParams.append("scope", [
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/youtube.readonly"
+        ].join(" "));
+        authUrl.searchParams.append("access_type", "offline");
+        authUrl.searchParams.append("prompt", "consent");
+        _loggerutil.default.debug(`Generated auth URL: ${authUrl.toString()}`);
+        res.redirect(authUrl.toString());
     } catch (error) {
         const err = error;
         _loggerutil.default.error(`🔥 Auth start failed: ${err.message}`, {
@@ -72,7 +83,7 @@ const authCallback = async (req, res)=>{
             secure: _config.default.NODE_ENV === "production",
             maxAge: 7 * 24 * 60 * 60 * 1000,
             sameSite: "lax",
-            domain: new URL(_config.default.SITE_URL).hostname
+            domain: new _url.URL(_config.default.SITE_URL).hostname
         });
         _loggerutil.default.info("🔄 Redirecting to dashboard");
         res.redirect("/dashboard");
@@ -119,7 +130,7 @@ const logout = (req, res)=>{
     try {
         _loggerutil.default.info("🚪 User logout request");
         res.clearCookie("token", {
-            domain: new URL(_config.default.SITE_URL).hostname,
+            domain: new _url.URL(_config.default.SITE_URL).hostname,
             path: "/"
         });
         _loggerutil.default.info("✅ User logged out successfully");
