@@ -9,7 +9,7 @@ import { URL } from "url";
 
 const app = express();
 
-app.use("/api", routes as RequestHandler); // Conversión explícita
+app.use("/", routes as RequestHandler); // Conversión explícita
 
 // Middlewares básicos - Solución para cookie-parser
 app.use(cookieParser() as unknown as import("express").RequestHandler);
