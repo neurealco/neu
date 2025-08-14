@@ -2,8 +2,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-Object.defineProperty(exports, "default" // Exportación por defecto
-, {
+Object.defineProperty(exports, "default", {
     enumerable: true,
     get: function() {
         return _default;
@@ -12,9 +11,12 @@ Object.defineProperty(exports, "default" // Exportación por defecto
 const _express = require("express");
 const _authcontroller = require("../controllers/auth.controller");
 const router = (0, _express.Router)();
-// Rutas de autenticación
-router.get("", (req, res)=>res.send("Auth base")); // Prueba
-router.get("/google/", _authcontroller.startAuth); // Agregar barra final
+// Ruta corregida con diagnóstico
+router.get("/google", (req, res)=>{
+    console.log("✅ Ruta /auth/google accedida");
+    (0, _authcontroller.startAuth)(req, res);
+});
+// Resto de rutas...
 router.get("/callback", _authcontroller.authCallback);
 router.get("/session", _authcontroller.getSession);
 router.post("/logout", _authcontroller.logout);
