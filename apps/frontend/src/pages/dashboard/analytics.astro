@@ -12,6 +12,7 @@ if (!session) {
 
 const dashboardData = await fetchDashboardData(session.user.id);
 const usage = await getUsage(session.user.id);
+export const prerender = false;
 ---
 
 <DashboardLayout title="Analytics">

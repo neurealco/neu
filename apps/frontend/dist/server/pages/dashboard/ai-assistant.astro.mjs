@@ -1,10 +1,10 @@
 import { c as createComponent, a as createAstro, d as renderComponent, r as renderTemplate } from '../../chunks/astro/server_LK4p-fTz.mjs';
-import { g as getUsage, $ as $$DashboardLayout } from '../../chunks/api_Cphik_UR.mjs';
-import { g as getSession } from '../../chunks/auth_BrjArZZB.mjs';
+import { g as getSession, a as getUsage, $ as $$DashboardLayout } from '../../chunks/api_qj3u-EDf.mjs';
 /* empty css                                           */
 export { renderers } from '../../renderers.mjs';
 
 const $$Astro = createAstro();
+const prerender = false;
 const $$AiAssistant = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$AiAssistant;
@@ -23,6 +23,7 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: $$AiAssistant,
   file: $$file,
+  prerender,
   url: $$url
 }, Symbol.toStringTag, { value: 'Module' }));
 

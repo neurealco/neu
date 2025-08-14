@@ -1,18 +1,29 @@
-import { c as createComponent, a as createAstro, m as maybeRenderHead, b as addAttribute, r as renderTemplate, e as renderHead, d as renderComponent, f as renderSlot } from './astro/server_LK4p-fTz.mjs';
-import { g as getSession$1 } from './auth_BrjArZZB.mjs';
+import { c as createComponent, a as createAstro, e as renderHead, d as renderComponent, f as renderSlot, r as renderTemplate } from './astro/server_LK4p-fTz.mjs';
+import { $ as $$Header } from './Header_DeQcKpbd.mjs';
 /* empty css                                */
 
-const $$Astro$1 = createAstro();
-const $$Header = createComponent(($$result, $$props, $$slots) => {
-  const Astro2 = $$result.createAstro($$Astro$1, $$props, $$slots);
-  Astro2.self = $$Header;
-  const navigation = [
-    { name: "Home", href: "/" },
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Pricing", href: "/pricing" }
-  ];
-  return renderTemplate`${maybeRenderHead()}<header class="header" data-astro-cid-qlfjksao> <div class="container" data-astro-cid-qlfjksao> <div class="header-inner" data-astro-cid-qlfjksao> <div class="logo" data-astro-cid-qlfjksao> <a href="/" data-astro-cid-qlfjksao> <img src="/assets/images/logo.png" alt="NeuReal" width="40" height="40" data-astro-cid-qlfjksao> <span data-astro-cid-qlfjksao>NeuReal</span> </a> </div> <nav class="nav" data-astro-cid-qlfjksao> ${navigation.map((item) => renderTemplate`<a${addAttribute(item.href, "href")}${addAttribute(Astro2.url.pathname === item.href ? "active" : "", "class")} data-astro-cid-qlfjksao> ${item.name} </a>`)} </nav> <div class="auth-buttons" data-astro-cid-qlfjksao> <a href="/login" class="btn btn-outline" data-astro-cid-qlfjksao>Login</a> </div> </div> </div> </header> `;
-}, "/workspaces/neu/apps/frontend/src/components/layout/Header.astro", void 0);
+{
+  throw new Error("Missing Supabase environment variables");
+}
+
+async function getSession$1(request) {
+  const cookie = request.headers.get("cookie");
+  if (!cookie) return null;
+  try {
+    const sessionResponse = await fetch(
+      `${undefined                               }/api/auth/session`,
+      {
+        headers: { cookie }
+      }
+    );
+    if (!sessionResponse.ok) return null;
+    const sessionData = await sessionResponse.json();
+    return sessionData.isAuthenticated ? sessionData : null;
+  } catch (error) {
+    console.error("Session error:", error);
+    return null;
+  }
+}
 
 const $$Astro = createAstro();
 const $$DashboardLayout = createComponent(async ($$result, $$props, $$slots) => {
@@ -67,4 +78,4 @@ const getSession = async (request) => {
   }
 };
 
-export { $$DashboardLayout as $, getSession as a, fetchDashboardData as f, getUsage as g };
+export { $$DashboardLayout as $, getUsage as a, getSession as b, fetchDashboardData as f, getSession$1 as g };

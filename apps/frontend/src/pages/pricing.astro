@@ -1,10 +1,8 @@
 ---
 // apps/frontend/src/pages/pricing.astro
-import Layout from "../layouts/Layout.astro";
-import { getSession } from "../lib/auth";
+import Layout from "../layouts/MainLayout.astro";
 
-const session = await getSession(Astro.request);
-const currentPlan = session?.user?.subscription_plan || 'free';
+export const prerender = true;
 ---
 
 <Layout title="Pricing">
@@ -16,7 +14,7 @@ const currentPlan = session?.user?.subscription_plan || 'free';
 
     <div class="plans">
       <!-- Free Plan -->
-      <div class={`plan-card ${currentPlan === 'free' ? 'current-plan' : ''}`}>
+      <div class="plan-card">
         <div class="plan-header">
           <h2>Free</h2>
           <div class="price">$0<span>/month</span></div>
@@ -28,15 +26,11 @@ const currentPlan = session?.user?.subscription_plan || 'free';
           <li>2 Video Optimizations</li>
           <li>Email Support</li>
         </ul>
-        {currentPlan === 'free' ? (
-          <button class="btn current">Your Current Plan</button>
-        ) : (
-          <a href="/dashboard" class="btn">Get Started</a>
-        )}
+        <a href="/sign-in" class="btn">Get Started</a>
       </div>
 
       <!-- Plus Plan -->
-      <div class={`plan-card highlight ${currentPlan === 'plus' ? 'current-plan' : ''}`}>
+      <div class="plan-card highlight">
         <div class="popular-badge">Recommended</div>
         <div class="plan-header">
           <h2>Plus</h2>
@@ -50,13 +44,11 @@ const currentPlan = session?.user?.subscription_plan || 'free';
           <li>Priority Support</li>
           <li>Custom Reports</li>
         </ul>
-        <a href={session ? `/api/subscription/plus` : '/sign-in'} class="btn primary">
-          {currentPlan === 'plus' ? 'Manage Plan' : 'Get Plus'}
-        </a>
+        <a href="/sign-in" class="btn primary">Get Plus</a>
       </div>
 
       <!-- Pro Plan -->
-      <div class={`plan-card ${currentPlan === 'pro' ? 'current-plan' : ''}`}>
+      <div class="plan-card">
         <div class="plan-header">
           <h2>Pro</h2>
           <div class="price">$50<span>/month</span></div>
@@ -70,228 +62,8 @@ const currentPlan = session?.user?.subscription_plan || 'free';
           <li>AI Content Suggestions</li>
           <li>Competitor Analysis</li>
         </ul>
-        <a href={session ? `/api/subscription/pro` : '/sign-in'} class="btn primary">
-          {currentPlan === 'pro' ? 'Manage Plan' : 'Get Pro'}
-        </a>
-      </div>
-    </div>
-
-    <div class="faq">
-      <h2>Frequently Asked Questions</h2>
-      <div class="faq-item">
-        <h3>Can I change plans later?</h3>
-        <p>Yes, you can upgrade or downgrade your plan anytime.</p>
-      </div>
-      <div class="faq-item">
-        <h3>Is there a free trial?</h3>
-        <p>All paid plans come with a 14-day free trial with full features.</p>
-      </div>
-      <div class="faq-item">
-        <h3>How do I cancel my subscription?</h3>
-        <p>You can cancel anytime from your account settings.</p>
+        <a href="/sign-in" class="btn primary">Get Pro</a>
       </div>
     </div>
   </div>
 </Layout>
-
-<style>
-  :root {
-    --primary: #6366f1;
-    --primary-dark: #4f46e5;
-    --success: #10b981;
-    --text: #1e293b;
-    --text-secondary: #64748b;
-    --bg: #f8fafc;
-    --card-bg: #ffffff;
-    --card-border: #e2e8f0;
-  }
-
-  .pricing-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 20px;
-  }
-
-  .pricing-header {
-    text-align: center;
-    margin-bottom: 60px;
-  }
-
-  .pricing-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
-    background: linear-gradient(90deg, var(--primary), var(--success));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .pricing-header p {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
-  .plans {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    margin-bottom: 60px;
-  }
-
-  .plan-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    padding: 40px 30px;
-    position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s;
-  }
-
-  .plan-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
-  }
-
-  .plan-card.highlight {
-    border: 2px solid var(--primary);
-    transform: scale(1.05);
-  }
-
-  .plan-card.highlight:hover {
-    transform: scale(1.05) translateY(-10px);
-  }
-
-  .plan-card.current-plan {
-    border: 2px solid var(--success);
-  }
-
-  .popular-badge {
-    position: absolute;
-    top: -12px;
-    right: 20px;
-    background: var(--primary);
-    color: white;
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-
-  .plan-header {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-
-  .plan-header h2 {
-    font-size: 1.8rem;
-    margin-bottom: 10px;
-  }
-
-  .price {
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 5px;
-  }
-
-  .price span {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    font-weight: normal;
-  }
-
-  .features {
-    list-style: none;
-    padding: 0;
-    margin-bottom: 30px;
-  }
-
-  .features li {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--card-border);
-    display: flex;
-    align-items: center;
-  }
-
-  .features li:before {
-    content: "✓";
-    color: var(--success);
-    margin-right: 10px;
-    font-weight: bold;
-  }
-
-  .btn {
-    display: block;
-    text-align: center;
-    padding: 15px;
-    background: var(--bg);
-    color: var(--text);
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s;
-    border: 1px solid var(--card-border);
-  }
-
-  .btn:hover {
-    background: #e2e8f0;
-  }
-
-  .btn.primary {
-    background: var(--primary);
-    color: white;
-    border: none;
-  }
-
-  .btn.primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
-  }
-
-  .btn.current {
-    background: var(--success);
-    color: white;
-    cursor: default;
-  }
-
-  .faq {
-    max-width: 800px;
-    margin: 0 auto;
-  }
-
-  .faq h2 {
-    text-align: center;
-    margin-bottom: 40px;
-    font-size: 2rem;
-  }
-
-  .faq-item {
-    margin-bottom: 25px;
-    border-bottom: 1px solid var(--card-border);
-    padding-bottom: 25px;
-  }
-
-  .faq-item h3 {
-    font-size: 1.3rem;
-    margin-bottom: 10px;
-  }
-
-  @media (max-width: 900px) {
-    .plans {
-      grid-template-columns: 1fr;
-      max-width: 500px;
-      margin: 0 auto 60px;
-    }
-    
-    .plan-card.highlight {
-      transform: scale(1);
-    }
-    
-    .plan-card.highlight:hover {
-      transform: scale(1) translateY(-10px);
-    }
-  }
-</style>

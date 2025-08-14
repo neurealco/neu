@@ -1,5 +1,5 @@
 import { c as createComponent, a as createAstro, m as maybeRenderHead, b as addAttribute, r as renderTemplate, d as renderComponent } from '../chunks/astro/server_LK4p-fTz.mjs';
-import { a as getSession, f as fetchDashboardData, $ as $$DashboardLayout } from '../chunks/api_Cphik_UR.mjs';
+import { b as getSession, f as fetchDashboardData, $ as $$DashboardLayout } from '../chunks/api_qj3u-EDf.mjs';
 import { $ as $$StatsCard } from '../chunks/StatsCard_7DOVS4RY.mjs';
 /* empty css                                 */
 export { renderers } from '../renderers.mjs';
@@ -23,6 +23,7 @@ const $$YouTubeStats = createComponent(($$result, $$props, $$slots) => {
 }, "/workspaces/neu/apps/frontend/src/components/dashboard/YouTubeStats.astro", void 0);
 
 const $$Astro = createAstro();
+const prerender = false;
 const $$Index = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$Index;
@@ -55,6 +56,7 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: $$Index,
   file: $$file,
+  prerender,
   url: $$url
 }, Symbol.toStringTag, { value: 'Module' }));
 

@@ -1,6 +1,6 @@
 ---
 import { getSession } from "../lib/auth";
-import Header from "../components/layout/Header.astro";
+import Header from "../components/Header.astro";
 
 const session = await getSession(Astro.request);
 if (!session) {

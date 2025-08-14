@@ -1,8 +1,7 @@
 import { c as createComponent, m as maybeRenderHead, r as renderTemplate, a as createAstro, d as renderComponent } from '../../chunks/astro/server_LK4p-fTz.mjs';
-import { f as fetchDashboardData, g as getUsage, $ as $$DashboardLayout } from '../../chunks/api_Cphik_UR.mjs';
+import { g as getSession, f as fetchDashboardData, a as getUsage, $ as $$DashboardLayout } from '../../chunks/api_qj3u-EDf.mjs';
 /* empty css                                        */
 import { $ as $$StatsCard } from '../../chunks/StatsCard_7DOVS4RY.mjs';
-import { g as getSession } from '../../chunks/auth_BrjArZZB.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const $$AnalyticsChart = createComponent(($$result, $$props, $$slots) => {
@@ -10,6 +9,7 @@ const $$AnalyticsChart = createComponent(($$result, $$props, $$slots) => {
 }, "/workspaces/neu/apps/frontend/src/components/dashboard/AnalyticsChart.astro", void 0);
 
 const $$Astro = createAstro();
+const prerender = false;
 const $$Analytics = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$Analytics;
@@ -29,6 +29,7 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: $$Analytics,
   file: $$file,
+  prerender,
   url: $$url
 }, Symbol.toStringTag, { value: 'Module' }));
 

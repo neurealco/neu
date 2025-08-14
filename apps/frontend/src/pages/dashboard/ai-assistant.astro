@@ -10,6 +10,7 @@ if (!session) {
 }
 
 const usage = await getUsage(session.user.id);
+export const prerender = false;
 ---
 
 <DashboardLayout title="AI Assistant">
