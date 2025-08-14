@@ -9,6 +9,8 @@ import { URL } from "url";
 
 const app = express();
 
+app.use("/api", routes as RequestHandler); // Conversión explícita
+
 // Middlewares básicos - Solución para cookie-parser
 app.use(cookieParser() as unknown as import("express").RequestHandler);
 
@@ -36,36 +38,6 @@ app.get("/health", (req, res) => {
     version: "1.0.0"
   });
 });
-
-// Solución definitiva para /api/auth/google
-app.get("/api/auth/google", (req, res) => {
-  try {
-    logger.info("✅ SOLUCIÓN DIRECTA: /api/auth/google accedida");
-    
-    // Construir URL de autenticación manualmente
-    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-    authUrl.searchParams.append("client_id", config.GOOGLE_CLIENT_ID);
-    authUrl.searchParams.append("redirect_uri", `${config.SITE_URL}/api/auth/callback`);
-    authUrl.searchParams.append("response_type", "code");
-    authUrl.searchParams.append("scope", [
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/youtube.readonly"
-    ].join(" "));
-    authUrl.searchParams.append("access_type", "offline");
-    authUrl.searchParams.append("prompt", "consent");
-
-    logger.debug(`🔗 URL de autenticación generada: ${authUrl.toString()}`);
-    res.redirect(authUrl.toString());
-  } catch (error) {
-    const err = error as Error;
-    logger.error(`🔥 Error en solución directa: ${err.message}`, { stack: err.stack });
-    res.status(500).json({ error: "Authentication failed" });
-  }
-});
-
-// Montar rutas principales
-app.use("/api", routes as RequestHandler); // Conversión explícita
 
 // Ruta de diagnóstico del sistema
 app.get("/api/system/debug", (req, res) => {
