@@ -1,28 +1,6 @@
 import { c as createComponent, a as createAstro, m as maybeRenderHead, b as addAttribute, r as renderTemplate, e as renderHead, d as renderComponent, f as renderSlot } from './astro/server_LK4p-fTz.mjs';
+import { g as getSession$1 } from './auth_BrjArZZB.mjs';
 /* empty css                                */
-
-{
-  throw new Error("Missing Supabase environment variables");
-}
-
-async function getSession$1(request) {
-  const cookie = request.headers.get("cookie");
-  if (!cookie) return null;
-  try {
-    const sessionResponse = await fetch(
-      `${undefined                               }/api/auth/session`,
-      {
-        headers: { cookie }
-      }
-    );
-    if (!sessionResponse.ok) return null;
-    const sessionData = await sessionResponse.json();
-    return sessionData.isAuthenticated ? sessionData : null;
-  } catch (error) {
-    console.error("Session error:", error);
-    return null;
-  }
-}
 
 const $$Astro$1 = createAstro();
 const $$Header = createComponent(($$result, $$props, $$slots) => {
@@ -59,15 +37,6 @@ const getUsage = async (userId) => {
   }
   return response.json();
 };
-const getSubscriptionDetails = async (userId) => {
-  const response = await fetch(`${API_BASE_URL}/subscription?userId=${userId}`, {
-    credentials: "include"
-  });
-  if (!response.ok) {
-    throw new Error("Failed to fetch subscription details");
-  }
-  return response.json();
-};
 const fetchDashboardData = async (userId) => {
   const response = await fetch(`${API_BASE_URL}/dashboard?userId=${userId}`, {
     credentials: "include",
@@ -98,4 +67,4 @@ const getSession = async (request) => {
   }
 };
 
-export { $$DashboardLayout as $, getUsage as a, getSubscriptionDetails as b, getSession as c, fetchDashboardData as f, getSession$1 as g };
+export { $$DashboardLayout as $, getSession as a, fetchDashboardData as f, getUsage as g };

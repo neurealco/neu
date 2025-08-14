@@ -10,6 +10,9 @@ Object.defineProperty(exports, "default", {
 });
 const _express = require("express");
 const _authmiddleware = require("../middleware/auth.middleware");
+const _authroutes = /*#__PURE__*/ _interop_require_default(require("./auth.routes"));
+const _dashboardroutes = require("./dashboard.routes");
+const _subscriptionroutes = require("./subscription.routes");
 const _loggerutil = /*#__PURE__*/ _interop_require_default(require("../utils/logger.util"));
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
@@ -23,45 +26,30 @@ router.use((req, res, next)=>{
     next();
 });
 // Health check
-router.get("/api/health", (req, res)=>{
+router.get("/health", (req, res)=>{
     res.status(200).json({
         status: "UP",
         timestamp: new Date().toISOString()
     });
 });
-// Importar y montar authRoutes con diagnóstico
-try {
-    const authRoutes = require("./auth.routes").default;
-    router.use("/api/auth", authRoutes);
-    _loggerutil.default.info("✅ Auth routes mounted successfully");
-} catch (error) {
-    _loggerutil.default.error("🔥 Failed to mount auth routes", error);
-}
-// Importar y montar dashboardRoutes
-try {
-    const { dashboardRoutes } = require("./dashboard.routes");
-    router.use("/api/dashboard", _authmiddleware.authenticate, dashboardRoutes);
-    _loggerutil.default.info("✅ Dashboard routes mounted successfully");
-} catch (error) {
-    _loggerutil.default.error("🔥 Failed to mount dashboard routes", error);
-}
-// Importar y montar subscriptionRoutes
-try {
-    const { subscriptionRoutes } = require("./subscription.routes");
-    router.use("/api/subscription", subscriptionRoutes);
-    _loggerutil.default.info("✅ Subscription routes mounted successfully");
-} catch (error) {
-    _loggerutil.default.error("🔥 Failed to mount subscription routes", error);
-}
+// Montar authRoutes
+router.use("/auth", _authroutes.default);
+_loggerutil.default.info("✅ Auth routes mounted successfully");
+// Montar dashboardRoutes (protegidas)
+router.use("/dashboard", _authmiddleware.authenticate, _dashboardroutes.dashboardRoutes);
+_loggerutil.default.info("✅ Dashboard routes mounted successfully");
+// Montar subscriptionRoutes
+router.use("/subscription", _subscriptionroutes.subscriptionRoutes);
+_loggerutil.default.info("✅ Subscription routes mounted successfully");
 // Ruta de prueba
-router.get("/api/test", (req, res)=>{
+router.get("/test", (req, res)=>{
     res.json({
         status: "Backend working",
         time: new Date()
     });
 });
 // Ruta de diagnóstico de rutas registradas
-router.get("/api/route-debug", (req, res)=>{
+router.get("/route-debug", (req, res)=>{
     const routes = [];
     // Función recursiva para recolectar rutas
     const getRoutes = (layer, prefix = "")=>{

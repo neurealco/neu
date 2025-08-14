@@ -10,7 +10,7 @@ export const getSubscriptionLink = async (req: Request, res: Response) => {
 
     const { plan } = req.params as { plan: 'plus' | 'pro' };
     
-    // Obtener email del usuario
+    // Obtener email del usuario de forma segura
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('email')
@@ -18,7 +18,36 @@ export const getSubscriptionLink = async (req: Request, res: Response) => {
       .single();
 
     if (error || !profile || !profile.email) {
-      throw new Error('User profile not found');
+      throw new Error('User email not found');
+    }
+
+    const url = await paddleService.generateSubscriptionLink(
+      req.user.id,
+      plan,
+      profile.email // Usar email de la base de datos
+    );
+
+    res.json({ url });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const generateSubscriptionLink = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+    const { plan } = req.params as { plan: 'plus' | 'pro' };
+    
+    // Obtener email desde Supabase
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', req.user.id)
+      .single();
+
+    if (error || !profile || !profile.email) {
+      throw new Error('User email not found');
     }
 
     const url = await paddleService.generateSubscriptionLink(
@@ -27,7 +56,7 @@ export const getSubscriptionLink = async (req: Request, res: Response) => {
       profile.email
     );
 
-    res.json({ url });
+    res.redirect(url);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

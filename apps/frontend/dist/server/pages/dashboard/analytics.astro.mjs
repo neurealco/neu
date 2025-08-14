@@ -1,7 +1,8 @@
 import { c as createComponent, m as maybeRenderHead, r as renderTemplate, a as createAstro, d as renderComponent } from '../../chunks/astro/server_LK4p-fTz.mjs';
-import { g as getSession, f as fetchDashboardData, a as getUsage, $ as $$DashboardLayout } from '../../chunks/api_BWjvruJB.mjs';
+import { f as fetchDashboardData, g as getUsage, $ as $$DashboardLayout } from '../../chunks/api_Cphik_UR.mjs';
 /* empty css                                        */
 import { $ as $$StatsCard } from '../../chunks/StatsCard_7DOVS4RY.mjs';
+import { g as getSession } from '../../chunks/auth_BrjArZZB.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const $$AnalyticsChart = createComponent(($$result, $$props, $$slots) => {

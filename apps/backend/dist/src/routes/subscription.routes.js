@@ -16,7 +16,8 @@ const router = (0, _express.Router)();
 router.post("/webhook", _subscriptioncontroller.handlePaddleWebhook);
 // Rutas protegidas para usuarios autenticados
 router.use(_authmiddleware.authenticate);
-router.get("/:plan", _subscriptioncontroller.getSubscriptionLink);
+// Cambio: Ruta para generar enlace y redirigir (GET)
+router.get("/:plan", _subscriptioncontroller.generateSubscriptionLink); // Cambiamos a generateSubscriptionLink
 router.get("/", _subscriptioncontroller.getSubscriptionDetails);
 router.post("/cancel", _subscriptioncontroller.cancelSubscription);
 const subscriptionRoutes = router;

@@ -1,5 +1,5 @@
 import { c as createComponent, a as createAstro, m as maybeRenderHead, b as addAttribute, r as renderTemplate, d as renderComponent } from '../chunks/astro/server_LK4p-fTz.mjs';
-import { c as getSession, f as fetchDashboardData, $ as $$DashboardLayout } from '../chunks/api_BWjvruJB.mjs';
+import { a as getSession, f as fetchDashboardData, $ as $$DashboardLayout } from '../chunks/api_Cphik_UR.mjs';
 import { $ as $$StatsCard } from '../chunks/StatsCard_7DOVS4RY.mjs';
 /* empty css                                 */
 export { renderers } from '../renderers.mjs';

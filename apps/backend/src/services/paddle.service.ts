@@ -100,7 +100,8 @@ export class PaddleService {
     if (!event.alert_name) return;
 
     try {
-      const userId = event.passthrough?.userId || event.customer_user_id;
+      // Extraer userId del passthrough o del customer_user_id
+      let userId = event.passthrough?.userId || event.customer_user_id;
       if (!userId) {
         logger.warn('Paddle webhook event without user ID', event);
         return;
@@ -140,6 +141,7 @@ export class PaddleService {
     plusPlanId: string,
     proPlanId: string
   ): Promise<void> {
+    // Determinar el plan basado en el ID del plan de suscripción
     const plan = event.subscription_plan_id === plusPlanId
       ? 'plus'
       : event.subscription_plan_id === proPlanId

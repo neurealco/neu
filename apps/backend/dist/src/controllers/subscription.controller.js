@@ -12,6 +12,9 @@ _export(exports, {
     get cancelSubscription () {
         return cancelSubscription;
     },
+    get generateSubscriptionLink () {
+        return generateSubscriptionLink;
+    },
     get getSubscriptionDetails () {
         return getSubscriptionDetails;
     },
@@ -32,15 +35,35 @@ const getSubscriptionLink = async (req, res)=>{
             });
         }
         const { plan } = req.params;
-        // Obtener email del usuario
+        // Obtener email del usuario de forma segura
         const { data: profile, error } = await _supabaseservice.supabase.from('profiles').select('email').eq('id', req.user.id).single();
         if (error || !profile || !profile.email) {
-            throw new Error('User profile not found');
+            throw new Error('User email not found');
         }
-        const url = await _paddleservice.paddleService.generateSubscriptionLink(req.user.id, plan, profile.email);
+        const url = await _paddleservice.paddleService.generateSubscriptionLink(req.user.id, plan, profile.email // Usar email de la base de datos
+        );
         res.json({
             url
         });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+const generateSubscriptionLink = async (req, res)=>{
+    try {
+        if (!req.user) return res.status(401).json({
+            error: "Unauthorized"
+        });
+        const { plan } = req.params;
+        // Obtener email desde Supabase
+        const { data: profile, error } = await _supabaseservice.supabase.from('profiles').select('email').eq('id', req.user.id).single();
+        if (error || !profile || !profile.email) {
+            throw new Error('User email not found');
+        }
+        const url = await _paddleservice.paddleService.generateSubscriptionLink(req.user.id, plan, profile.email);
+        res.redirect(url);
     } catch (error) {
         res.status(500).json({
             error: error.message

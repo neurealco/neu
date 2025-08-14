@@ -21,8 +21,7 @@ function _interop_require_default(obj) {
     };
 }
 const app = (0, _express.default)();
-app.use("/", _routes.default); // Conversión explícita
-// Middlewares básicos - Solución para cookie-parser
+// Middlewares básicos
 app.use((0, _cookieparser.default)());
 app.use((0, _cors.default)({
     origin: _config.default.SITE_URL,
@@ -44,28 +43,8 @@ app.use((req, res, next)=>{
     _loggerutil.default.info(`🌐 Solicitud recibida: ${req.method} ${req.originalUrl}`);
     next();
 });
-// Health check mejorado
-app.get("/health", (req, res)=>{
-    _loggerutil.default.info("🩺 Health check passed");
-    res.status(200).json({
-        status: "UP",
-        timestamp: new Date().toISOString(),
-        version: "1.0.0"
-    });
-});
-// Ruta de diagnóstico del sistema
-app.get("/api/system/debug", (req, res)=>{
-    const routes = app._router.stack.filter((layer)=>layer.route).map((layer)=>({
-            path: layer.route.path,
-            methods: Object.keys(layer.route.methods)
-        }));
-    res.json({
-        node: process.version,
-        environment: _config.default.NODE_ENV,
-        routes: routes,
-        time: new Date().toISOString()
-    });
-});
+// Montar rutas principales
+app.use("/", _routes.default);
 // Middleware de errores
 app.use(_errormiddleware.errorHandler);
 // Diagnóstico de rutas al iniciar

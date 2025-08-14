@@ -1,5 +1,8 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/auth.middleware";
+import authRoutes from "./auth.routes";
+import { dashboardRoutes } from "./dashboard.routes"; // Importación corregida
+import { subscriptionRoutes } from "./subscription.routes"; // Importación corregida
 import logger from "../utils/logger.util";
 
 const router = Router();
@@ -11,47 +14,32 @@ router.use((req, res, next) => {
 });
 
 // Health check
-router.get("/api/health", (req, res) => {
+router.get("/health", (req, res) => {
   res.status(200).json({
     status: "UP",
     timestamp: new Date().toISOString()
   });
 });
 
-// Importar y montar authRoutes con diagnóstico
-try {
-  const authRoutes = require("./auth.routes").default;
-  router.use("/api/auth", authRoutes);
-  logger.info("✅ Auth routes mounted successfully");
-} catch (error) {
-  logger.error("🔥 Failed to mount auth routes", error);
-}
+// Montar authRoutes
+router.use("/auth", authRoutes);
+logger.info("✅ Auth routes mounted successfully");
 
-// Importar y montar dashboardRoutes
-try {
-  const { dashboardRoutes } = require("./dashboard.routes");
-  router.use("/api/dashboard", authenticate, dashboardRoutes);
-  logger.info("✅ Dashboard routes mounted successfully");
-} catch (error) {
-  logger.error("🔥 Failed to mount dashboard routes", error);
-}
+// Montar dashboardRoutes (protegidas)
+router.use("/dashboard", authenticate, dashboardRoutes);
+logger.info("✅ Dashboard routes mounted successfully");
 
-// Importar y montar subscriptionRoutes
-try {
-  const { subscriptionRoutes } = require("./subscription.routes");
-  router.use("/api/subscription", subscriptionRoutes);
-  logger.info("✅ Subscription routes mounted successfully");
-} catch (error) {
-  logger.error("🔥 Failed to mount subscription routes", error);
-}
+// Montar subscriptionRoutes
+router.use("/subscription", subscriptionRoutes);
+logger.info("✅ Subscription routes mounted successfully");
 
 // Ruta de prueba
-router.get("/api/test", (req, res) => {
+router.get("/test", (req, res) => {
   res.json({ status: "Backend working", time: new Date() });
 });
 
 // Ruta de diagnóstico de rutas registradas
-router.get("/api/route-debug", (req, res) => {
+router.get("/route-debug", (req, res) => {
   const routes: Array<{ method: string; path: string }> = [];
 
   // Función recursiva para recolectar rutas

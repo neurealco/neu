@@ -98,7 +98,8 @@ class PaddleService {
    */ async handleWebhookEvent(event) {
         if (!event.alert_name) return;
         try {
-            const userId = event.passthrough?.userId || event.customer_user_id;
+            // Extraer userId del passthrough o del customer_user_id
+            let userId = event.passthrough?.userId || event.customer_user_id;
             if (!userId) {
                 _loggerutil.default.warn('Paddle webhook event without user ID', event);
                 return;
@@ -127,6 +128,7 @@ class PaddleService {
         }
     }
     async updateUserSubscription(userId, event, plusPlanId, proPlanId) {
+        // Determinar el plan basado en el ID del plan de suscripción
         const plan = event.subscription_plan_id === plusPlanId ? 'plus' : event.subscription_plan_id === proPlanId ? 'pro' : 'free';
         await _supabaseservice.supabase.from('profiles').update({
             subscription_plan: plan,
