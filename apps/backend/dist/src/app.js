@@ -15,22 +15,16 @@ const _config = /*#__PURE__*/ _interop_require_default(require("./config"));
 const _routes = /*#__PURE__*/ _interop_require_default(require("./routes"));
 const _errormiddleware = require("./middleware/error.middleware");
 const _rateLimitutil = require("./utils/rateLimit.util");
+const _loggerutil = /*#__PURE__*/ _interop_require_default(require("./utils/logger.util"));
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj
     };
 }
 const app = (0, _express.default)();
-// Solución 1: Usar una sintaxis alternativa para cookie-parser
+// Solución para cookie-parser
 const cookieParser = _cookieparser.default;
 app.use(cookieParser());
-// Solución 2: Usar require en lugar de import
-// const cookieParser = require('cookie-parser');
-// app.use(cookieParser());
-app.get("/api/auth/google", (req, res)=>{
-    console.log("⚠️ Usando ruta de emergencia");
-    res.redirect("https://google.com"); // Prueba simple
-});
 app.use((0, _cors.default)({
     origin: _config.default.SITE_URL,
     credentials: true,
@@ -46,65 +40,50 @@ app.use((0, _cors.default)({
     ]
 }));
 app.use(_express.default.json());
-// Health check
-app.get("/health", (req, res)=>{
-    res.status(200).json({
-        status: "UP",
-        timestamp: new Date().toISOString()
-    });
-});
-app.use((0, _rateLimitutil.rateLimitMiddleware)(_rateLimitutil.apiRateLimiter));
-// Ruta de prueba
-app.get("/api/test", (req, res)=>{
-    res.json({
-        status: "Backend working",
-        time: new Date()
-    });
-});
-app.get('/api/routes/debug', (req, res)=>{
-    const routes = [];
-    app._router.stack.forEach((layer)=>{
-        if (layer.route) {
-            routes.push({
-                path: layer.route.path,
-                methods: Object.keys(layer.route.methods)
-            });
-        } else if (layer.name === 'router') {
-            layer.handle.stack.forEach((sublayer)=>{
-                if (sublayer.route) {
-                    routes.push({
-                        path: sublayer.route.path,
-                        methods: Object.keys(sublayer.route.methods)
-                    });
-                }
-            });
-        }
-    });
-    res.json({
-        message: "Rutas registradas",
-        routes: routes
-    });
-});
+// Middleware de diagnóstico
 app.use((req, res, next)=>{
-    console.log(`[REQUEST] ${req.method} ${req.originalUrl}`);
+    _loggerutil.default.http(`${req.method} ${req.originalUrl}`, {
+        ip: req.ip,
+        headers: req.headers,
+        cookies: req.cookies
+    });
     next();
 });
+// Health check con diagnóstico
+app.get("/health", (req, res)=>{
+    _loggerutil.default.info("🩺 Health check passed");
+    res.status(200).json({
+        status: "UP",
+        timestamp: new Date().toISOString(),
+        version: "1.0.0"
+    });
+});
+// Middleware de rate limiting
+app.use((0, _rateLimitutil.rateLimitMiddleware)(_rateLimitutil.apiRateLimiter));
 // Montar rutas principales
 app.use("/api", _routes.default);
-// Error handling
+// Middleware de error
 app.use(_errormiddleware.errorHandler);
-function printRoutes(layer, prefix = "") {
+// ===== DIAGNÓSTICO COMPLETO DE RUTAS =====
+function printRoutes(layer, prefix = "", depth = 0) {
+    const indent = "  ".repeat(depth);
     if (layer.route) {
         const methods = Object.keys(layer.route.methods).join(", ").toUpperCase();
-        console.log(`[ROUTE] ${methods} ${prefix}${layer.route.path}`);
+        _loggerutil.default.debug(`${indent}[ROUTE] ${methods} ${prefix}${layer.route.path}`);
     } else if (layer.name === "router" && layer.handle.stack) {
-        const newPrefix = prefix + layer.regexp.source.replace("\\/", "/").replace("(?=\\/|$)", "").replace("/^", "").replace("\\/?(?=/|$)", "");
+        const newPrefix = prefix + layer.regexp.source.replace("\\/?", "").replace("(?=\\/|$)", "").replace("^\\", "").replace("\\/?(?=/|$)", "");
+        _loggerutil.default.debug(`${indent}[ROUTER] ${newPrefix}`);
         layer.handle.stack.forEach((sublayer)=>{
-            printRoutes(sublayer, newPrefix);
+            printRoutes(sublayer, newPrefix, depth + 1);
         });
+    } else if (layer.name) {
+        _loggerutil.default.debug(`${indent}[MIDDLEWARE] ${layer.name} (${layer.handle.length})`);
     }
 }
-console.log("===== RUTAS REGISTRADAS =====");
-app._router.stack.forEach((layer)=>printRoutes(layer));
-console.log("==============================");
+// Diagnóstico después de inicializar
+app.on("mount", ()=>{
+    _loggerutil.default.info("===== INICIO DE DIAGNÓSTICO DE RUTAS =====");
+    app._router.stack.forEach((layer)=>printRoutes(layer));
+    _loggerutil.default.info("===== FIN DE DIAGNÓSTICO DE RUTAS =====");
+});
 const _default = app;
