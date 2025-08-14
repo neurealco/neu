@@ -10,16 +10,26 @@ Object.defineProperty(exports, "default", {
 });
 const _express = require("express");
 const _authcontroller = require("../controllers/auth.controller");
+const _config = /*#__PURE__*/ _interop_require_default(require("../config"));
+function _interop_require_default(obj) {
+    return obj && obj.__esModule ? obj : {
+        default: obj
+    };
+}
 const router = (0, _express.Router)();
-// Ruta GET /auth/google - Versión simplificada
 router.get("/google", (req, res)=>{
-    res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?
-    client_id=${process.env.GOOGLE_CLIENT_ID}
-    &redirect_uri=${process.env.SITE_URL}/api/auth/callback
-    &response_type=code
-    &scope=profile email https://www.googleapis.com/auth/youtube.readonly
-    &access_type=offline
-    &prompt=consent`.replace(/\s+/g, ''));
+    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authUrl.searchParams.append("client_id", _config.default.GOOGLE_CLIENT_ID);
+    authUrl.searchParams.append("redirect_uri", `${_config.default.SITE_URL}/api/auth/callback`);
+    authUrl.searchParams.append("response_type", "code");
+    authUrl.searchParams.append("scope", [
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/youtube.readonly"
+    ].join(" "));
+    authUrl.searchParams.append("access_type", "offline");
+    authUrl.searchParams.append("prompt", "consent");
+    res.redirect(authUrl.toString());
 });
 // Ruta GET /auth/callback
 router.get("/callback", _authcontroller.authCallback);
