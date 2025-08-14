@@ -1,38 +1,33 @@
-import express from "express";
+import express, { RequestHandler } from "express";
 import cors from "cors";
-import cookieParserLib from "cookie-parser";
+import cookieParser from "cookie-parser"; // Importación corregida
 import config from "./config";
 import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
 import logger from "./utils/logger.util";
+import { URL } from "url";
 
 const app = express();
 
-// Solución para cookie-parser
-const cookieParser = cookieParserLib as any as (options?: any) => express.RequestHandler;
-app.use(cookieParser());
+// Middlewares básicos - Solución para cookie-parser
+app.use(cookieParser() as RequestHandler); // Conversión explícita a RequestHandler
 
-app.use(
-  cors({
-    origin: config.SITE_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  })
-);
+app.use(cors({
+  origin: config.SITE_URL,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+} as cors.CorsOptions));
+
 app.use(express.json());
 
 // Middleware de diagnóstico de solicitudes
 app.use((req, res, next) => {
-  logger.http(`${req.method} ${req.originalUrl}`, {
-    ip: req.ip,
-    headers: req.headers,
-    cookies: req.cookies
-  });
+  logger.info(`🌐 Solicitud recibida: ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Health check
+// Health check mejorado
 app.get("/health", (req, res) => {
   logger.info("🩺 Health check passed");
   res.status(200).json({
@@ -42,44 +37,68 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Montar rutas principales
-app.use("/api", routes);
-
-// Middleware de error
-app.use(errorHandler);
-
-// ===== DIAGNÓSTICO DE RUTAS CORREGIDO =====
-function printRoutes(layer: any, prefix: string = "", depth: number = 0): void {
-  const indent = "  ".repeat(depth);
-  
-  if (layer.route) {
-    const methods = Object.keys(layer.route.methods).join(", ").toUpperCase();
-    logger.debug(`${indent}[ROUTE] ${methods} ${prefix}${layer.route.path}`);
-  } else if (layer.name === "router" && layer.handle.stack) {
-    // Expresión regular simplificada y corregida
-    const regexStr = layer.regexp.toString()
-      .replace(/^\/\^/, "")
-      .replace(/\\\//g, "/")
-      .replace(/\(\?=\\\/\|\$\)\//, "")
-      .replace(/\/i$/, "");
-
-    const newPrefix = prefix + regexStr;
+// Solución definitiva para /api/auth/google
+app.get("/api/auth/google", (req, res) => {
+  try {
+    logger.info("✅ SOLUCIÓN DIRECTA: /api/auth/google accedida");
     
-    logger.debug(`${indent}[ROUTER] ${newPrefix}`);
-    
-    layer.handle.stack.forEach((sublayer: any) => {
-      printRoutes(sublayer, newPrefix, depth + 1);
-    });
-  } else if (layer.name) {
-    logger.debug(`${indent}[MIDDLEWARE] ${layer.name}`);
+    // Construir URL de autenticación manualmente
+    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authUrl.searchParams.append("client_id", config.GOOGLE_CLIENT_ID);
+    authUrl.searchParams.append("redirect_uri", `${config.SITE_URL}/api/auth/callback`);
+    authUrl.searchParams.append("response_type", "code");
+    authUrl.searchParams.append("scope", [
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/youtube.readonly"
+    ].join(" "));
+    authUrl.searchParams.append("access_type", "offline");
+    authUrl.searchParams.append("prompt", "consent");
+
+    logger.debug(`🔗 URL de autenticación generada: ${authUrl.toString()}`);
+    res.redirect(authUrl.toString());
+  } catch (error) {
+    const err = error as Error;
+    logger.error(`🔥 Error en solución directa: ${err.message}`, { stack: err.stack });
+    res.status(500).json({ error: "Authentication failed" });
   }
-}
+});
 
-// Diagnóstico después de inicializar
+// Montar rutas principales
+app.use("/api", routes as RequestHandler); // Conversión explícita
+
+// Ruta de diagnóstico del sistema
+app.get("/api/system/debug", (req, res) => {
+  const routes = app._router.stack
+    .filter((layer: any) => layer.route)
+    .map((layer: any) => ({
+      path: layer.route.path,
+      methods: Object.keys(layer.route.methods)
+    }));
+
+  res.json({
+    node: process.version,
+    environment: config.NODE_ENV,
+    routes: routes,
+    time: new Date().toISOString()
+  });
+});
+
+// Middleware de errores
+app.use(errorHandler as express.ErrorRequestHandler);
+
+// Diagnóstico de rutas al iniciar
 app.on("mount", () => {
-  logger.info("===== INICIO DE DIAGNÓSTICO DE RUTAS =====");
-  app._router.stack.forEach((layer: any) => printRoutes(layer));
-  logger.info("===== FIN DE DIAGNÓSTICO DE RUTAS =====");
+  logger.info("🚀 Aplicación iniciada");
+  
+  const routes = app._router.stack
+    .filter((layer: any) => layer.route)
+    .map((layer: any) => ({
+      path: layer.route.path,
+      methods: Object.keys(layer.route.methods)
+    }));
+  
+  logger.info("📋 Rutas registradas:", { routes });
 });
 
 export default app;
