@@ -13,6 +13,7 @@ const _express = require("express");
 const _authcontroller = require("../controllers/auth.controller");
 const router = (0, _express.Router)();
 // Rutas de autenticación
+router.get("", (req, res)=>res.send("Auth base")); // Prueba
 router.get("/google", _authcontroller.startAuth); // GET /auth/google
 router.get("/callback", _authcontroller.authCallback);
 router.get("/session", _authcontroller.getSession);

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authRoutes } from "./auth.routes";
+import authRoutes from "./auth.routes";  // Importación corregida
 import { dashboardRoutes } from "./dashboard.routes";
 import { subscriptionRoutes } from "./subscription.routes";
 import { authenticate } from "../middleware/auth.middleware";
@@ -14,13 +14,12 @@ router.get("/health", (req, res) => {
   });
 });
 
-router.use("/auth", authRoutes); // ✅ Esta línea es crucial
 // Rutas públicas
-router.use("/api/auth", authRoutes);
+router.use("/api/auth", authRoutes);  // Única ruta para auth
 
 // Rutas protegidas
 router.use("/api/dashboard", authenticate, dashboardRoutes);
-router.use("/api/subscription", subscriptionRoutes);
+router.use("/api/subscription", authenticate, subscriptionRoutes);
 
 // Ruta de prueba
 router.get("/api/test", (req, res) => {
