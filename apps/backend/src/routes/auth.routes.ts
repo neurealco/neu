@@ -1,39 +1,41 @@
 import { Router } from "express";
-import { authCallback, getSession, logout } from "../controllers/auth.controller";
+import { 
+  startAuth, 
+  authCallback, 
+  getSession, 
+  logout,
+  emailSignUp,
+  emailSignIn,
+  requestPasswordReset,
+  confirmPasswordReset,
+  changeUserPassword, // Cambiado el nombre
+  validateResetTokenEndpoint
+} from "../controllers/auth.controller";
 import config from "../config";
+import { authRateLimiter } from "../utils/rateLimit.util";
+import { authenticate } from "../middleware/auth.middleware";
+import { rateLimitMiddleware } from "../utils/rateLimit.util"; // Importar el middleware
 
 const router = Router();
 
-// Ruta GET /auth/google
-router.get("/google", (req, res) => {
-  try {
-    // Construir URL de autenticación manualmente
-    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-    authUrl.searchParams.append("client_id", config.GOOGLE_CLIENT_ID);
-    authUrl.searchParams.append("redirect_uri", `${config.SITE_URL}/api/auth/callback`);
-    authUrl.searchParams.append("response_type", "code");
-    authUrl.searchParams.append("scope", [
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/youtube.readonly"
-    ].join(" "));
-    authUrl.searchParams.append("access_type", "offline");
-    authUrl.searchParams.append("prompt", "consent");
-
-    res.redirect(authUrl.toString());
-  } catch (error) {
-    const err = error as Error;
-    res.status(500).json({ error: "Authentication failed" });
-  }
-});
-
-// Ruta GET /auth/callback
+// Google OAuth
+router.get("/google", startAuth);
 router.get("/callback", authCallback);
 
-// Ruta GET /auth/session
+// Session management
 router.get("/session", getSession);
-
-// Ruta POST /auth/logout
 router.post("/logout", logout);
+
+// Email/password authentication
+router.post("/signup/email", rateLimitMiddleware(authRateLimiter), emailSignUp);
+router.post("/login/email", rateLimitMiddleware(authRateLimiter), emailSignIn);
+
+// Password reset flow
+router.post("/forgot-password", rateLimitMiddleware(authRateLimiter), requestPasswordReset);
+router.post("/reset-password", rateLimitMiddleware(authRateLimiter), confirmPasswordReset);
+router.get("/validate-reset-token/:token", validateResetTokenEndpoint);
+
+// Authenticated password change (usando el nuevo nombre)
+router.post("/change-password", authenticate, rateLimitMiddleware(authRateLimiter), changeUserPassword);
 
 export default router;

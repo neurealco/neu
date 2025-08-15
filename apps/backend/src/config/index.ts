@@ -20,4 +20,9 @@ export default {
   // IDs de planes de Paddle (nuevas variables)
   PADDLE_PLUS_PLAN_ID: process.env.PADDLE_PLUS_PLAN_ID || "",
   PADDLE_PRO_PLAN_ID: process.env.PADDLE_PRO_PLAN_ID || "",
+
+   SMTP_HOST: process.env.SMTP_HOST || "",
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
+  SMTP_USER: process.env.SMTP_USER || "",
+  SMTP_PASSWORD: process.env.SMTP_PASSWORD || "",
 };

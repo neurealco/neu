@@ -1,9 +1,28 @@
 import { Request, Response } from "express";
-import { handleCallback } from "../services/auth.service";
+import {
+  signUpWithEmail,
+  signInWithEmail,
+  initiatePasswordReset,
+  validateResetToken,
+  resetPassword,
+  changePassword as changePasswordService,
+  handleCallback
+} from "../services/auth.service";
 import jwt from "jsonwebtoken";
 import config from "../config";
 import logger from "../utils/logger.util";
 import { URL } from "url";
+
+// Configuración de cookies
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: config.NODE_ENV === "production",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+  sameSite: "lax" as const,
+  domain: config.NODE_ENV === "production" 
+    ? `.${new URL(config.SITE_URL).hostname}` 
+    : "localhost"
+});
 
 export const startAuth = (req: Request, res: Response) => {
   try {
@@ -52,13 +71,7 @@ export const authCallback = async (req: Request, res: Response) => {
 
     logger.info(`🔐 Generated JWT for user: ${user.id}`);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: config.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "lax",
-      domain: new URL(config.SITE_URL).hostname,
-    });
+    res.cookie("token", token, getCookieOptions());
 
     logger.info("🔄 Redirecting to dashboard");
     res.redirect("/dashboard");
@@ -100,7 +113,9 @@ export const logout = (req: Request, res: Response) => {
     logger.info("🚪 User logout request");
     
     res.clearCookie("token", {
-      domain: new URL(config.SITE_URL).hostname,
+      domain: config.NODE_ENV === "production" 
+        ? `.${new URL(config.SITE_URL).hostname}` 
+        : "localhost",
       path: "/",
     });
     
@@ -110,5 +125,109 @@ export const logout = (req: Request, res: Response) => {
     const err = error as Error;
     logger.error(`🔥 Logout failed: ${err.message}`, { stack: err.stack });
     res.status(500).json({ error: "Logout failed" });
+  }
+};
+
+export const emailSignUp = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    const user = await signUpWithEmail(email, password);
+    
+    // Crear JWT para sesión
+    const token = jwt.sign(
+      { sub: user.id, email: user.email },
+      config.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Establecer cookie segura
+    res.cookie("token", token, getCookieOptions());
+    
+    res.status(201).json({
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const emailSignIn = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    const user = await signInWithEmail(email, password);
+    
+    // Crear JWT para sesión
+    const token = jwt.sign(
+      { sub: user.id, email: user.email },
+      config.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Establecer cookie segura
+    res.cookie("token", token, getCookieOptions());
+    
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    });
+  } catch (error: any) {
+    res.status(401).json({ error: error.message });
+  }
+};
+
+export const requestPasswordReset = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    await initiatePasswordReset(email);
+    
+    // Respuesta genérica por seguridad
+    res.json({ 
+      message: "Si este email existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña" 
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const confirmPasswordReset = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+    await resetPassword(token, newPassword);
+    
+    res.json({ message: "Contraseña actualizada exitosamente" });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Cambiado el nombre para evitar conflicto
+export const changeUserPassword = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "No autenticado" });
+    }
+    
+    const { currentPassword, newPassword } = req.body;
+    await changePasswordService(req.user.id, currentPassword, newPassword);
+    
+    res.json({ message: "Contraseña actualizada exitosamente" });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Endpoint para validar token de reset (usado por el frontend)
+export const validateResetTokenEndpoint = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { email } = await validateResetToken(token);
+    res.json({ valid: true, email });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 };
